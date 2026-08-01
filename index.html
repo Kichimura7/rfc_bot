@@ -36,11 +36,7 @@
         .slider-container { margin-bottom: 22px; }
         .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .val-badge { color: #e50914; font-weight: bold; font-size: 18px; }
-        input[type="range"] {
-            width: 100%;
-            accent-color: #e50914;
-            cursor: pointer;
-        }
+        input[type="range"] { width: 100%; accent-color: #e50914; cursor: pointer; }
         button {
             width: 100%;
             padding: 15px;
@@ -54,12 +50,7 @@
             margin-top: 10px;
         }
         button:active { background: #b20710; }
-        .btn-secondary {
-            background: #2a2a2a;
-            color: #aaa;
-            border: 1px solid #333;
-        }
-        .btn-secondary:active { background: #333; }
+        .btn-secondary { background: #2a2a2a; color: #aaa; border: 1px solid #333; }
 
         .screen { display: none; }
         .screen.active { display: block; }
@@ -75,12 +66,7 @@
         .status-searching { background: #332b00; color: #ffcc00; border: 1px solid #ffcc00; }
         .status-paired { background: #003311; color: #00ff66; border: 1px solid #00ff66; }
 
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #2a2a2a;
-        }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #2a2a2a; }
         .info-label { color: #888; }
         .info-val { font-weight: bold; text-align: right; }
 
@@ -95,12 +81,8 @@
         .vs-divider { text-align: center; font-weight: 900; font-size: 22px; color: #e50914; margin: 10px 0; }
 
         .pulse-loader {
-            width: 10px;
-            height: 10px;
-            background-color: #ffcc00;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
+            width: 10px; height: 10px; background-color: #ffcc00;
+            border-radius: 50%; display: inline-block; margin-right: 6px;
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
@@ -116,17 +98,14 @@
     <div id="screen-form" class="screen">
         <div class="card">
             <h2>ЛИГА RFC 20</h2>
-            
             <div class="input-group">
                 <label>ФИО участника</label>
                 <input type="text" id="fullName" placeholder="Иванов Иван Иванович">
             </div>
-
             <div class="input-group">
                 <label>Клуб / Команда</label>
                 <input type="text" id="club" placeholder="Название клуба или «Самостоятельно»">
             </div>
-
             <div class="slider-container">
                 <div class="slider-header">
                     <span>Возраст:</span>
@@ -134,7 +113,6 @@
                 </div>
                 <input type="range" id="ageSlider" min="6" max="25" value="18">
             </div>
-
             <div class="slider-container">
                 <div class="slider-header">
                     <span>Весовая категория:</span>
@@ -142,12 +120,11 @@
                 </div>
                 <input type="range" id="weightSlider" min="0" max="7" value="3">
             </div>
-
-            <button onclick="submitForm()">ОТПРАВИТЬ ЗАЯВКУ</button>
+            <button id="btn-submit" onclick="submitForm()">ОТПРАВИТЬ ЗАЯВКУ</button>
         </div>
     </div>
 
-    <!-- 2. ЭКРАН ПОИСКА / ЛИЧНЫЙ КАБИНЕТ -->
+    <!-- 2. ЭКРАН ПОИСКА -->
     <div id="screen-searching" class="screen">
         <div class="card">
             <h2>ЛИЧНЫЙ КАБИНЕТ</h2>
@@ -156,24 +133,12 @@
                     <span class="pulse-loader"></span> ПОИСК СОПЕРНИКА
                 </div>
             </div>
-
-            <div class="info-row">
-                <span class="info-label">Боец:</span>
-                <span class="info-val" id="search-name">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Клуб:</span>
-                <span class="info-val" id="search-club">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Дивизион:</span>
-                <span class="info-val" id="search-cat">-</span>
-            </div>
-
+            <div class="info-row"><span class="info-label">Боец:</span><span class="info-val" id="search-name">-</span></div>
+            <div class="info-row"><span class="info-label">Клуб:</span><span class="info-val" id="search-club">-</span></div>
+            <div class="info-row"><span class="info-label">Дивизион:</span><span class="info-val" id="search-cat">-</span></div>
             <p style="text-align: center; font-size: 13px; color: #888; margin-top: 20px;">
-                ⏳ Ожидайте. Как только появится соперник, вам придёт уведомление в боте!
+                ⏳ Страница автоматически обновится, как только найдеётся пара!
             </p>
-
             <button class="btn-secondary" onclick="showScreen('screen-form')">✏️ Изменить анкету</button>
         </div>
     </div>
@@ -185,19 +150,15 @@
             <div style="text-align: center;">
                 <div class="status-badge status-paired">🟢 ПАРА СФОРМИРОВАНА</div>
             </div>
-
             <p style="text-align: center; font-size: 13px; color: #aaa; margin-bottom: 15px;" id="pair-cat">
                 Дивизион: -
             </p>
-
             <div class="corner-box red-corner">
                 <div class="corner-title">Красный угол (Вы)</div>
                 <div class="fighter-name" id="my-name">-</div>
                 <div class="fighter-club" id="my-club">-</div>
             </div>
-
             <div class="vs-divider">VS</div>
-
             <div class="corner-box blue-corner">
                 <div class="corner-title">Синий угол (Соперник)</div>
                 <div class="fighter-name" id="opp-name">-</div>
@@ -209,6 +170,11 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+
+        // Укажи URL твоего API сервера (при тесте локально через ngrok или IP)
+        const API_URL = "https://1aa80dddced3c0.lhr.life"; 
+
+        const userId = tg.initDataUnsafe?.user?.id || 12345678; // Фолбэк для тестов
 
         const RFC_DATA = {
             "6-7": ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг", "+32 кг"],
@@ -252,10 +218,7 @@
         }
 
         ageSlider.addEventListener('input', updateWeightSlider);
-        weightSlider.addEventListener('input', () => {
-            weightVal.innerText = currentWeights[weightSlider.value];
-        });
-
+        weightSlider.addEventListener('input', () => { weightVal.innerText = currentWeights[weightSlider.value]; });
         updateWeightSlider();
 
         function showScreen(screenId) {
@@ -263,104 +226,66 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        function initScreen() {
-            const params = new URLSearchParams(window.location.search);
-            const screenParam = params.get('screen');
-
-            // 1. Если данные переданы явно через URL от бота
-            if (screenParam === 'searching') {
-                const name = params.get('name') || '';
-                const club = params.get('club') || '';
-                const cat = params.get('category') || '';
-
-                document.getElementById('search-name').innerText = name;
-                document.getElementById('search-club').innerText = club;
-                document.getElementById('search-cat').innerText = cat;
-
-                localStorage.setItem('rfc_user', JSON.stringify({ name, club, category: cat, status: 'searching' }));
-                showScreen('screen-searching');
-                return;
-            } 
-            
-            if (screenParam === 'paired') {
-                const name = params.get('name') || '';
-                const club = params.get('club') || '';
-                const oppName = params.get('opp_name') || '';
-                const oppClub = params.get('opp_club') || '';
-                const cat = params.get('category') || '';
-
-                document.getElementById('my-name').innerText = name;
-                document.getElementById('my-club').innerText = club;
-                document.getElementById('opp-name').innerText = oppName;
-                document.getElementById('opp-club').innerText = oppClub;
-                document.getElementById('pair-cat').innerText = "Дивизион: " + cat;
-
-                localStorage.setItem('rfc_user', JSON.stringify({ name, club, category: cat, status: 'paired', oppName, oppClub }));
+        function renderData(data) {
+            if (data.status === 'paired') {
+                document.getElementById('my-name').innerText = data.name;
+                document.getElementById('my-club').innerText = data.club;
+                document.getElementById('opp-name').innerText = data.opp_name;
+                document.getElementById('opp-club').innerText = data.opp_club;
+                document.getElementById('pair-cat').innerText = "Дивизион: " + data.category;
                 showScreen('screen-paired');
-                return;
+            } else if (data.status === 'searching') {
+                document.getElementById('search-name').innerText = data.name;
+                document.getElementById('search-club').innerText = data.club;
+                document.getElementById('search-cat').innerText = data.category;
+                showScreen('screen-searching');
+            } else {
+                showScreen('screen-form');
             }
-
-            // 2. Если параметров в URL нет (клик по кнопке меню), читаем из localStorage
-            const savedUser = localStorage.getItem('rfc_user');
-            if (savedUser) {
-                try {
-                    const uData = JSON.parse(savedUser);
-                    if (uData.status === 'paired') {
-                        document.getElementById('my-name').innerText = uData.name || '-';
-                        document.getElementById('my-club').innerText = uData.club || '-';
-                        document.getElementById('opp-name').innerText = uData.oppName || '-';
-                        document.getElementById('opp-club').innerText = uData.oppClub || '-';
-                        document.getElementById('pair-cat').innerText = "Дивизион: " + (uData.category || '-');
-                        showScreen('screen-paired');
-                        return;
-                    } else if (uData.name) {
-                        document.getElementById('search-name').innerText = uData.name || '-';
-                        document.getElementById('search-club').innerText = uData.club || '-';
-                        document.getElementById('search-cat').innerText = uData.category || '-';
-                        showScreen('screen-searching');
-                        return;
-                    }
-                } catch(e) {
-                    console.error(e);
-                }
-            }
-
-            // 3. По умолчанию показываем пустую анкету
-            showScreen('screen-form');
         }
 
-        function submitForm() {
+        // Проверка статуса при входе
+        async function checkStatus() {
+            try {
+                const res = await fetch(`${API_URL}/api/status?user_id=${userId}`);
+                const data = await res.json();
+                renderData(data);
+            } catch (e) {
+                console.error("Ошибка сети:", e);
+                showScreen('screen-form');
+            }
+        }
+
+        // Отправка формы
+        async function submitForm() {
             const name = document.getElementById('fullName').value.trim();
             const club = document.getElementById('club').value.trim() || 'Самостоятельно';
-
-            if (!name) {
-                alert('Пожалуйста, введи ФИО!');
-                return;
-            }
+            if (!name) { alert('Введи ФИО!'); return; }
 
             const category = `${currentAgeGroup} лет (${currentWeights[weightSlider.value]})`;
 
-            const data = {
-                full_name: name,
-                club: club,
-                age_group: currentAgeGroup + " лет",
-                weight_cat: currentWeights[weightSlider.value],
-                category: category
-            };
-
-            // Сохраняем в память устройства
-            localStorage.setItem('rfc_user', JSON.stringify({
-                name: name,
-                club: club,
-                category: category,
-                status: 'searching'
-            }));
-
-            // Передаем данные боту
-            tg.sendData(JSON.stringify(data));
+            try {
+                const res = await fetch(`${API_URL}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, full_name: name, club, category })
+                });
+                const data = await res.json();
+                renderData(data);
+            } catch (e) {
+                alert("Ошибка соединения с сервером!");
+            }
         }
 
-        initScreen();
+        // Фоновый опрос (раз в 3 секунды), если боец находится в поиске
+        setInterval(async () => {
+            const searchScreen = document.getElementById('screen-searching');
+            if (searchScreen.classList.contains('active')) {
+                await checkStatus();
+            }
+        }, 3000);
+
+        checkStatus();
     </script>
 </body>
 </html>
