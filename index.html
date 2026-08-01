@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFC 20 - Регистрация</title>
+    <title>RFC 20 - Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: #121212;
             color: #ffffff;
-            padding: 20px;
+            padding: 16px;
             margin: 0;
         }
         .card {
@@ -18,10 +18,11 @@
             padding: 20px;
             border-radius: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 15px;
         }
-        h2 { text-align: center; color: #e50914; margin-top: 0; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        h2 { text-align: center; color: #e50914; margin-top: 0; font-size: 22px; }
+        .input-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #ccc; }
         input[type="text"] {
             width: 100%;
             padding: 12px;
@@ -32,7 +33,7 @@
             box-sizing: border-box;
             font-size: 16px;
         }
-        .slider-container { margin-bottom: 25px; }
+        .slider-container { margin-bottom: 22px; }
         .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .val-badge { color: #e50914; font-weight: bold; font-size: 18px; }
         input[type="range"] {
@@ -47,53 +48,168 @@
             color: white;
             border: none;
             border-radius: 10px;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
             cursor: pointer;
+            margin-top: 10px;
         }
         button:active { background: #b20710; }
+        .btn-secondary {
+            background: #2a2a2a;
+            color: #aaa;
+            border: 1px solid #333;
+        }
+        .btn-secondary:active { background: #333; }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .status-searching { background: #332b00; color: #ffcc00; border: 1px solid #ffcc00; }
+        .status-paired { background: #003311; color: #00ff66; border: 1px solid #00ff66; }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .info-label { color: #888; }
+        .info-val { font-weight: bold; text-align: right; }
+
+        .corner-box { padding: 15px; border-radius: 12px; margin-bottom: 10px; }
+        .red-corner { background: rgba(229, 9, 20, 0.15); border: 2px solid #e50914; }
+        .blue-corner { background: rgba(0, 102, 255, 0.15); border: 2px solid #0066ff; }
+        .corner-title { font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
+        .red-corner .corner-title { color: #ff4d4d; }
+        .blue-corner .corner-title { color: #4d94ff; }
+        .fighter-name { font-size: 18px; font-weight: bold; }
+        .fighter-club { font-size: 14px; color: #aaa; margin-top: 2px; }
+        .vs-divider { text-align: center; font-weight: 900; font-size: 22px; color: #e50914; margin: 10px 0; }
+
+        .pulse-loader {
+            width: 10px;
+            height: 10px;
+            background-color: #ffcc00;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(255, 204, 0, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0); }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>ЛИГА RFC 20</h2>
-        
-        <div class="input-group">
-            <label>ФИО участника</label>
-            <input type="text" id="fullName" placeholder="Иванов Иван Иванович">
-        </div>
 
-        <div class="input-group">
-            <label>Клуб / Команда</label>
-            <input type="text" id="club" placeholder="Название клуба или «Самостоятельно»">
-        </div>
-
-        <!-- Ползунок Возраста -->
-        <div class="slider-container">
-            <div class="slider-header">
-                <span>Возраст:</span>
-                <span class="val-badge" id="ageVal">18 лет (+18)</span>
+    <!-- 1. ЭКРАН АНКЕТЫ -->
+    <div id="screen-form" class="screen">
+        <div class="card">
+            <h2>ЛИГА RFC 20</h2>
+            
+            <div class="input-group">
+                <label>ФИО участника</label>
+                <input type="text" id="fullName" placeholder="Иванов Иван Иванович">
             </div>
-            <input type="range" id="ageSlider" min="6" max="25" value="18">
-        </div>
 
-        <!-- Ползунок Веса -->
-        <div class="slider-container">
-            <div class="slider-header">
-                <span>Весовая категория:</span>
-                <span class="val-badge" id="weightVal">70 кг</span>
+            <div class="input-group">
+                <label>Клуб / Команда</label>
+                <input type="text" id="club" placeholder="Название клуба или «Самостоятельно»">
             </div>
-            <input type="range" id="weightSlider" min="0" max="7" value="3">
-        </div>
 
-        <button onclick="sendData()">ОТПРАВИТЬ ЗАЯВКУ</button>
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span>Возраст:</span>
+                    <span class="val-badge" id="ageVal">18 лет (+18)</span>
+                </div>
+                <input type="range" id="ageSlider" min="6" max="25" value="18">
+            </div>
+
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span>Весовая категория:</span>
+                    <span class="val-badge" id="weightVal">70 кг</span>
+                </div>
+                <input type="range" id="weightSlider" min="0" max="7" value="3">
+            </div>
+
+            <button onclick="submitForm()">ОТПРАВИТЬ ЗАЯВКУ</button>
+        </div>
+    </div>
+
+    <!-- 2. ЭКРАН ПОИСКА / ЛИЧНЫЙ КАБИНЕТ -->
+    <div id="screen-searching" class="screen">
+        <div class="card">
+            <h2>ЛИЧНЫЙ КАБИНЕТ</h2>
+            <div style="text-align: center;">
+                <div class="status-badge status-searching">
+                    <span class="pulse-loader"></span> ПОИСК СОПЕРНИКА
+                </div>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Боец:</span>
+                <span class="info-val" id="search-name">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Клуб:</span>
+                <span class="info-val" id="search-club">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Дивизион:</span>
+                <span class="info-val" id="search-cat">-</span>
+            </div>
+
+            <p style="text-align: center; font-size: 13px; color: #888; margin-top: 20px;">
+                ⏳ Ожидайте. Как только появится соперник, вам придёт уведомление в боте!
+            </p>
+
+            <button class="btn-secondary" onclick="showScreen('screen-form')">✏️ Изменить анкету</button>
+        </div>
+    </div>
+
+    <!-- 3. ЭКРАН КАРТОЧКИ БОЯ (VS) -->
+    <div id="screen-paired" class="screen">
+        <div class="card">
+            <h2>КАРТОЧКА БОЯ</h2>
+            <div style="text-align: center;">
+                <div class="status-badge status-paired">🟢 ПАРА СФОРМИРОВАНА</div>
+            </div>
+
+            <p style="text-align: center; font-size: 13px; color: #aaa; margin-bottom: 15px;" id="pair-cat">
+                Дивизион: -
+            </p>
+
+            <div class="corner-box red-corner">
+                <div class="corner-title">Красный угол (Вы)</div>
+                <div class="fighter-name" id="my-name">-</div>
+                <div class="fighter-club" id="my-club">-</div>
+            </div>
+
+            <div class="vs-divider">VS</div>
+
+            <div class="corner-box blue-corner">
+                <div class="corner-title">Синий угол (Соперник)</div>
+                <div class="fighter-name" id="opp-name">-</div>
+                <div class="fighter-club" id="opp-club">-</div>
+            </div>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Сетка категорий RFC 20
         const RFC_DATA = {
             "6-7": ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг", "+32 кг"],
             "8-9": ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"],
@@ -128,7 +244,6 @@
             currentWeights = RFC_DATA[currentAgeGroup];
 
             ageVal.innerText = `${age} лет (${currentAgeGroup})`;
-
             weightSlider.max = currentWeights.length - 1;
             if (parseInt(weightSlider.value) >= currentWeights.length) {
                 weightSlider.value = currentWeights.length - 1;
@@ -143,7 +258,78 @@
 
         updateWeightSlider();
 
-        function sendData() {
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function initScreen() {
+            const params = new URLSearchParams(window.location.search);
+            const screenParam = params.get('screen');
+
+            // 1. Если данные переданы явно через URL от бота
+            if (screenParam === 'searching') {
+                const name = params.get('name') || '';
+                const club = params.get('club') || '';
+                const cat = params.get('category') || '';
+
+                document.getElementById('search-name').innerText = name;
+                document.getElementById('search-club').innerText = club;
+                document.getElementById('search-cat').innerText = cat;
+
+                localStorage.setItem('rfc_user', JSON.stringify({ name, club, category: cat, status: 'searching' }));
+                showScreen('screen-searching');
+                return;
+            } 
+            
+            if (screenParam === 'paired') {
+                const name = params.get('name') || '';
+                const club = params.get('club') || '';
+                const oppName = params.get('opp_name') || '';
+                const oppClub = params.get('opp_club') || '';
+                const cat = params.get('category') || '';
+
+                document.getElementById('my-name').innerText = name;
+                document.getElementById('my-club').innerText = club;
+                document.getElementById('opp-name').innerText = oppName;
+                document.getElementById('opp-club').innerText = oppClub;
+                document.getElementById('pair-cat').innerText = "Дивизион: " + cat;
+
+                localStorage.setItem('rfc_user', JSON.stringify({ name, club, category: cat, status: 'paired', oppName, oppClub }));
+                showScreen('screen-paired');
+                return;
+            }
+
+            // 2. Если параметров в URL нет (клик по кнопке меню), читаем из localStorage
+            const savedUser = localStorage.getItem('rfc_user');
+            if (savedUser) {
+                try {
+                    const uData = JSON.parse(savedUser);
+                    if (uData.status === 'paired') {
+                        document.getElementById('my-name').innerText = uData.name || '-';
+                        document.getElementById('my-club').innerText = uData.club || '-';
+                        document.getElementById('opp-name').innerText = uData.oppName || '-';
+                        document.getElementById('opp-club').innerText = uData.oppClub || '-';
+                        document.getElementById('pair-cat').innerText = "Дивизион: " + (uData.category || '-');
+                        showScreen('screen-paired');
+                        return;
+                    } else if (uData.name) {
+                        document.getElementById('search-name').innerText = uData.name || '-';
+                        document.getElementById('search-club').innerText = uData.club || '-';
+                        document.getElementById('search-cat').innerText = uData.category || '-';
+                        showScreen('screen-searching');
+                        return;
+                    }
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+
+            // 3. По умолчанию показываем пустую анкету
+            showScreen('screen-form');
+        }
+
+        function submitForm() {
             const name = document.getElementById('fullName').value.trim();
             const club = document.getElementById('club').value.trim() || 'Самостоятельно';
 
@@ -152,16 +338,29 @@
                 return;
             }
 
+            const category = `${currentAgeGroup} лет (${currentWeights[weightSlider.value]})`;
+
             const data = {
                 full_name: name,
                 club: club,
                 age_group: currentAgeGroup + " лет",
                 weight_cat: currentWeights[weightSlider.value],
-                category: `${currentAgeGroup} лет (${currentWeights[weightSlider.value]})`
+                category: category
             };
 
+            // Сохраняем в память устройства
+            localStorage.setItem('rfc_user', JSON.stringify({
+                name: name,
+                club: club,
+                category: category,
+                status: 'searching'
+            }));
+
+            // Передаем данные боту
             tg.sendData(JSON.stringify(data));
         }
+
+        initScreen();
     </script>
 </body>
 </html>
