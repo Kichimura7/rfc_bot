@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFC 20 - Регистрация</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            padding: 20px;
+            margin: 0;
+        }
+        .card {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h2 { text-align: center; color: #e50914; margin-top: 0; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #2a2a2a;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .slider-container { margin-bottom: 25px; }
+        .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .val-badge { color: #e50914; font-weight: bold; font-size: 18px; }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #e50914;
+            cursor: pointer;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:active { background: #b20710; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>ЛИГА RFC 20</h2>
+        
+        <div class="input-group">
+            <label>ФИО участника</label>
+            <input type="text" id="fullName" placeholder="Иванов Иван Иванович">
+        </div>
+
+        <div class="input-group">
+            <label>Клуб / Команда</label>
+            <input type="text" id="club" placeholder="Название клуба или «Самостоятельно»">
+        </div>
+
+        <!-- Ползунок Возраста -->
+        <div class="slider-container">
+            <div class="slider-header">
+                <span>Возраст:</span>
+                <span class="val-badge" id="ageVal">18 лет (+18)</span>
+            </div>
+            <input type="range" id="ageSlider" min="6" max="25" value="18">
+        </div>
+
+        <!-- Ползунок Веса -->
+        <div class="slider-container">
+            <div class="slider-header">
+                <span>Весовая категория:</span>
+                <span class="val-badge" id="weightVal">70 кг</span>
+            </div>
+            <input type="range" id="weightSlider" min="0" max="7" value="3">
+        </div>
+
+        <button onclick="sendData()">ОТПРАВИТЬ ЗАЯВКУ</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Сетка категорий RFC 20
+        const RFC_DATA = {
+            "6-7": ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг", "+32 кг"],
+            "8-9": ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"],
+            "10-11": ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "+65 кг"],
+            "12-13": ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг", "+75 кг"],
+            "14-15": ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг", "+85 кг"],
+            "16-17": ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"],
+            "18+": ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"]
+        };
+
+        const ageSlider = document.getElementById('ageSlider');
+        const weightSlider = document.getElementById('weightSlider');
+        const ageVal = document.getElementById('ageVal');
+        const weightVal = document.getElementById('weightVal');
+
+        let currentAgeGroup = "18+";
+        let currentWeights = RFC_DATA["18+"];
+
+        function getAgeGroup(age) {
+            if (age <= 7) return "6-7";
+            if (age <= 9) return "8-9";
+            if (age <= 11) return "10-11";
+            if (age <= 13) return "12-13";
+            if (age <= 15) return "14-15";
+            if (age <= 17) return "16-17";
+            return "18+";
+        }
+
+        function updateWeightSlider() {
+            const age = parseInt(ageSlider.value);
+            currentAgeGroup = getAgeGroup(age);
+            currentWeights = RFC_DATA[currentAgeGroup];
+
+            ageVal.innerText = `${age} лет (${currentAgeGroup})`;
+
+            weightSlider.max = currentWeights.length - 1;
+            if (parseInt(weightSlider.value) >= currentWeights.length) {
+                weightSlider.value = currentWeights.length - 1;
+            }
+            weightVal.innerText = currentWeights[weightSlider.value];
+        }
+
+        ageSlider.addEventListener('input', updateWeightSlider);
+        weightSlider.addEventListener('input', () => {
+            weightVal.innerText = currentWeights[weightSlider.value];
+        });
+
+        updateWeightSlider();
+
+        function sendData() {
+            const name = document.getElementById('fullName').value.trim();
+            const club = document.getElementById('club').value.trim() || 'Самостоятельно';
+
+            if (!name) {
+                alert('Пожалуйста, введи ФИО!');
+                return;
+            }
+
+            const data = {
+                full_name: name,
+                club: club,
+                age_group: currentAgeGroup + " лет",
+                weight_cat: currentWeights[weightSlider.value],
+                category: `${currentAgeGroup} лет (${currentWeights[weightSlider.value]})`
+            };
+
+            tg.sendData(JSON.stringify(data));
+        }
+    </script>
+</body>
+</html>
