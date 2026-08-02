@@ -10,7 +10,6 @@
             --bg-color: #0b0b0d;
             --card-bg: #16161a;
             --accent-red: #e50914;
-            --accent-glow: rgba(229, 9, 20, 0.6);
             --text-main: #ffffff;
             --text-muted: #a0a0ab;
             --border-color: #26262e;
@@ -30,7 +29,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding-bottom: 70px;
+            padding-bottom: 80px;
         }
 
         .container {
@@ -40,37 +39,73 @@
             width: 100%;
         }
 
-        /* === НЕОНОВЫЙ ЛОГОТИП С АНИМАЦИЕЙ === */
-        .logo-container {
-            text-align: center;
-            margin-bottom: 24px;
+        /* === КОНТЕЙНЕР ЛОГОТИПА И БЕГАЮЩАЯ ТОЧКА === */
+        .logo-box {
+            position: relative;
+            width: 240px;
+            margin: 10px auto 25px auto;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 16px;
+            background: #0b0b0d;
+            overflow: hidden;
         }
 
-        .logo-glow {
-            width: 220px;
-            max-width: 80%;
+        /* Тонкая рамка с вращающимся красным огоньком */
+        .logo-box::before {
+            content: '';
+            position: absolute;
+            width: 160%;
+            height: 160%;
+            background: conic-gradient(
+                transparent 0deg, 
+                transparent 300deg, 
+                var(--accent-red) 340deg, 
+                #ffffff 360deg
+            );
+            animation: rotateDot 2.5s linear infinite;
+        }
+
+        /* Перекрытие, создающее внутренний фон */
+        .logo-box::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: #0b0b0d;
+            border-radius: 14px;
+            z-index: 1;
+        }
+
+        @keyframes rotateDot {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Вырезаем чёрный фон с самого логотипа прямо в браузере */
+        .logo-img {
+            position: relative;
+            z-index: 2;
+            width: 100%;
             height: auto;
-            filter: drop-shadow(0 0 15px var(--accent-glow));
-            animation: pulseGlow 2.5s infinite alternate ease-in-out;
+            display: block;
+            mix-blend-mode: screen; /* Делает чёрный фон файла прозрачным */
         }
 
-        @keyframes pulseGlow {
-            0% {
-                filter: drop-shadow(0 0 8px rgba(229, 9, 20, 0.4));
-            }
-            100% {
-                filter: drop-shadow(0 0 25px rgba(229, 9, 20, 0.9));
-            }
+        /* Статичный логотип для остальных экранов */
+        .logo-static-container {
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         .logo-static {
-            width: 160px;
-            max-width: 60%;
+            width: 170px;
             height: auto;
-            margin-bottom: 16px;
+            mix-blend-mode: screen;
         }
 
-        /* === КАРТОЧКИ === */
+        /* === КАРТОЧКИ И ФОРМЫ === */
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -81,7 +116,7 @@
         }
 
         h2 {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -96,7 +131,7 @@
 
         label {
             display: block;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
             text-transform: uppercase;
             margin-bottom: 6px;
@@ -126,7 +161,7 @@
             color: #fff;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -139,16 +174,17 @@
             transform: scale(0.98);
         }
 
-        /* === ИНФО-БЛОКИ (ВЗВЕШИВАНИЕ И АДРЕС) === */
+        /* === ИНФО-БЛОКИ === */
         .info-box {
             background: #0f0f12;
             border-left: 3px solid var(--accent-red);
             border-radius: 8px;
             padding: 12px;
-            margin-top: 16px;
+            margin-top: 12px;
             display: flex;
             align-items: center;
             gap: 12px;
+            text-align: left;
         }
 
         .info-icon {
@@ -176,18 +212,19 @@
             display: block;
         }
 
-        /* === НАВИГАЦИЯ === */
+        /* === НИЖНЯЯ НАВИГАЦИЯ === */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 60px;
+            height: 65px;
             background: #121215;
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
             align-items: center;
+            z-index: 100;
         }
 
         .nav-btn {
@@ -200,6 +237,11 @@
             align-items: center;
             gap: 4px;
             cursor: pointer;
+            width: 33%;
+        }
+
+        .nav-btn .icon {
+            font-size: 20px;
         }
 
         .nav-btn.active {
@@ -211,10 +253,10 @@
 
     <div class="container">
         
-        <!-- ЭКРАН 1: ЗАЯВКА -->
+        <!-- 1. ЭКРАН: ЗАЯВКА -->
         <div id="screen-form" class="screen active">
-            <div class="logo-container">
-                <img src="logo.png" alt="RFC Logo" class="logo-glow">
+            <div class="logo-box">
+                <img src="logo.png" alt="RFC Logo" class="logo-img">
             </div>
 
             <div class="card">
@@ -248,20 +290,19 @@
             </div>
         </div>
 
-        <!-- ЭКРАН 2: ПОИСК СОПЕРНИКА -->
+        <!-- 2. ЭКРАН: ПОИСК СОПЕРНИКА -->
         <div id="screen-searching" class="screen">
-            <div class="logo-container">
+            <div class="logo-static-container">
                 <img src="logo.png" alt="RFC Logo" class="logo-static">
             </div>
 
             <div class="card" style="text-align: center;">
                 <h2>⏳ Поиск соперника</h2>
-                <p style="color: var(--text-muted); font-size: 14px;">Ваша заявка принята. Ожидайте подбора пары в вашей весовой категории.</p>
+                <p style="color: var(--text-muted); font-size: 13px;">Ваша заявка принята. Ожидайте подбора пары в вашей весовой категории.</p>
                 
-                <!-- БЛОК: ВЗВЕШИВАНИЕ И ЛОКАЦИЯ -->
                 <div class="info-box">
                     <div class="info-icon">⚖️</div>
-                    <div class="info-text" style="text-align: left;">
+                    <div class="info-text">
                         <div class="title">Дата и время взвешивания</div>
                         <div class="value">15 Августа, 12:00</div>
                     </div>
@@ -269,7 +310,7 @@
 
                 <div class="info-box">
                     <div class="info-icon">📍</div>
-                    <div class="info-text" style="text-align: left;">
+                    <div class="info-text">
                         <div class="title">Адрес проведения</div>
                         <div class="value">г. Москва, ул. Спортивная, д. 10 (БК «Арена»)</div>
                     </div>
@@ -277,34 +318,43 @@
             </div>
         </div>
 
-        <!-- ЭКРАН 3: СОПЕРНИК НАЙДЕН -->
-        <div id="screen-paired" class="screen">
-            <div class="logo-container">
+        <!-- 3. ЭКРАН: ПОМОЩЬ -->
+        <div id="screen-support" class="screen">
+            <div class="logo-static-container">
                 <img src="logo.png" alt="RFC Logo" class="logo-static">
             </div>
 
-            <div class="card" style="text-align: center;">
-                <h2 style="color: #4cd964;">🔥 Соперник найден!</h2>
-                
-                <div style="margin: 20px 0; font-size: 18px; font-weight: bold;">
-                    <div id="pair-my-name" style="color: var(--accent-red);">Боец 1</div>
-                    <div style="font-size: 12px; color: var(--text-muted); margin: 5px 0;">VS</div>
-                    <div id="pair-opp-name">Боец 2</div>
-                </div>
-
+            <div class="card">
+                <h2>Поддержка и регламент</h2>
+                <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 12px;">
+                    По всем вопросам организационного характера, правилам турнира и изменению данных обращайтесь к администратору лиги.
+                </p>
                 <div class="info-box">
-                    <div class="info-icon">⚖️</div>
-                    <div class="info-text" style="text-align: left;">
-                        <div class="title">Дата взвешивания</div>
-                        <div class="value">15 Августа, 12:00</div>
+                    <div class="info-icon">💬</div>
+                    <div class="info-text">
+                        <div class="title">Связь с организатором</div>
+                        <div class="value">@rfc_admin</div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="info-box">
-                    <div class="info-icon">📍</div>
-                    <div class="info-text" style="text-align: left;">
-                        <div class="title">Адрес проведения</div>
-                        <div class="value">г. Москва, ул. Спортивная, д. 10 (БК «Арена»)</div>
+        <!-- 4. ЭКРАН: ПРОФИЛЬ -->
+        <div id="screen-profile" class="screen">
+            <div class="logo-static-container">
+                <img src="logo.png" alt="RFC Logo" class="logo-static">
+            </div>
+
+            <div class="card">
+                <h2>Профиль бойца</h2>
+                <div style="margin-top: 10px;">
+                    <div style="margin-bottom: 12px;">
+                        <span style="color: var(--text-muted); font-size: 12px;">Имя:</span>
+                        <div id="user-profile-name" style="font-size: 16px; font-weight: bold;">-</div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <span style="color: var(--text-muted); font-size: 12px;">Telegram ID:</span>
+                        <div id="user-profile-id" style="font-size: 14px; font-weight: 500; color: var(--text-muted);">-</div>
                     </div>
                 </div>
             </div>
@@ -312,11 +362,19 @@
 
     </div>
 
-    <!-- НАВИГАЦИЯ -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
     <div class="bottom-nav">
-        <button class="nav-btn active" id="nav-form">
-            <span>🥊</span>
+        <button class="nav-btn active" id="btn-nav-form" onclick="switchTab('form')">
+            <span class="icon">🥊</span>
             <span>Заявка</span>
+        </button>
+        <button class="nav-btn" id="btn-nav-support" onclick="switchTab('support')">
+            <span class="icon">🎧</span>
+            <span>Помощь</span>
+        </button>
+        <button class="nav-btn" id="btn-nav-profile" onclick="switchTab('profile')">
+            <span class="icon">👤</span>
+            <span>Профиль</span>
         </button>
     </div>
 
@@ -324,12 +382,31 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const API_URL = "https://720d48d0679ff1.lhr.life"; // Твой актуальный хост
+        // Твой актуальный хост туннеля
+        const API_URL = "https://720d48d0679ff1.lhr.life";
         const userId = tg.initDataUnsafe?.user?.id || 12345678;
 
         if (tg.initDataUnsafe?.user) {
-            const userName = tg.initDataUnsafe.user.first_name || '';
+            const userName = tg.initDataUnsafe.user.first_name || 'Боец';
             document.getElementById('input-name').value = userName;
+            document.getElementById('user-profile-name').innerText = userName;
+            document.getElementById('user-profile-id').innerText = userId;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+            if (tabName === 'form') {
+                document.getElementById('screen-form').classList.add('active');
+                document.getElementById('btn-nav-form').classList.add('active');
+            } else if (tabName === 'support') {
+                document.getElementById('screen-support').classList.add('active');
+                document.getElementById('btn-nav-support').classList.add('active');
+            } else if (tabName === 'profile') {
+                document.getElementById('screen-profile').classList.add('active');
+                document.getElementById('btn-nav-profile').classList.add('active');
+            }
         }
 
         async function submitForm() {
@@ -351,7 +428,7 @@
                 const data = await res.json();
                 renderData(data);
             } catch (e) {
-                alert('Ошибка: ' + (e.message || e));
+                alert('Ошибка отправки: ' + (e.message || e));
             }
         }
 
@@ -360,10 +437,6 @@
 
             if (data.status === 'searching') {
                 document.getElementById('screen-searching').classList.add('active');
-            } else if (data.status === 'paired') {
-                document.getElementById('pair-my-name').innerText = `${data.my_name} (${data.my_club})`;
-                document.getElementById('pair-opp-name').innerText = `${data.opponent_name} (${data.opponent_club})`;
-                document.getElementById('screen-paired').classList.add('active');
             } else {
                 document.getElementById('screen-form').classList.add('active');
             }
