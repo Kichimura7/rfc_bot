@@ -1,291 +1,472 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RFC 20 - Mini App</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            padding: 16px;
-            margin: 0;
-        }
-        .card {
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            margin-bottom: 15px;
-        }
-        h2 { text-align: center; color: #e50914; margin-top: 0; font-size: 22px; }
-        .input-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #ccc; }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #2a2a2a;
-            color: #fff;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-        .slider-container { margin-bottom: 22px; }
-        .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .val-badge { color: #e50914; font-weight: bold; font-size: 18px; }
-        input[type="range"] { width: 100%; accent-color: #e50914; cursor: pointer; }
-        button {
-            width: 100%;
-            padding: 15px;
-            background: #e50914;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 17px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:active { background: #b20710; }
-        .btn-secondary { background: #2a2a2a; color: #aaa; border: 1px solid #333; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>MMA League Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
 
-        .screen { display: none; }
-        .screen.active { display: block; }
+    body {
+      background-color: #0f0f12;
+      color: #ffffff;
+      padding: 16px;
+      padding-bottom: 85px; /* Отступ под нижнюю навигацию */
+    }
 
-        .status-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        .status-searching { background: #332b00; color: #ffcc00; border: 1px solid #ffcc00; }
-        .status-paired { background: #003311; color: #00ff66; border: 1px solid #00ff66; }
+    /* Экраны (по умолчанию скрыты) */
+    .screen {
+      display: none;
+    }
+    .screen.active {
+      display: block;
+    }
 
-        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #2a2a2a; }
-        .info-label { color: #888; }
-        .info-val { font-weight: bold; text-align: right; }
+    /* Карточки и блоки */
+    .card {
+      background: #1c1c1e;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
 
-        .corner-box { padding: 15px; border-radius: 12px; margin-bottom: 10px; }
-        .red-corner { background: rgba(229, 9, 20, 0.15); border: 2px solid #e50914; }
-        .blue-corner { background: rgba(0, 102, 255, 0.15); border: 2px solid #0066ff; }
-        .corner-title { font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
-        .red-corner .corner-title { color: #ff4d4d; }
-        .blue-corner .corner-title { color: #4d94ff; }
-        .fighter-name { font-size: 18px; font-weight: bold; }
-        .fighter-club { font-size: 14px; color: #aaa; margin-top: 2px; }
-        .vs-divider { text-align: center; font-weight: 900; font-size: 22px; color: #e50914; margin: 10px 0; }
+    h2, h3 {
+      margin-bottom: 12px;
+    }
 
-        .pulse-loader {
-            width: 10px; height: 10px; background-color: #ffcc00;
-            border-radius: 50%; display: inline-block; margin-right: 6px;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(255, 204, 0, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 204, 0, 0); }
-        }
-    </style>
+    label {
+      display: block;
+      font-size: 13px;
+      color: #8e8e93;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      background: #2c2c2e;
+      border: 1px solid #3a3a3c;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+    }
+
+    button.btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: #007aff;
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 16px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    button.btn-primary:active {
+      opacity: 0.8;
+    }
+
+    /* Профиль */
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 15px;
+    }
+
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #2c2c2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .user-meta .badge {
+      display: inline-block;
+      font-size: 11px;
+      background: rgba(0, 122, 255, 0.2);
+      color: #007aff;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+
+    .menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .menu-item:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .arrow {
+      color: #8e8e93;
+      font-size: 18px;
+    }
+
+    /* Поддержка */
+    .support-ticket-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(0, 122, 255, 0.12);
+      border: 1px solid rgba(0, 122, 255, 0.3);
+      padding: 16px;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .plus-icon {
+      width: 40px;
+      height: 40px;
+      background: #007aff;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .support-info p {
+      margin-top: 2px;
+      font-size: 12px;
+      color: #8e8e93;
+    }
+
+    /* Нижняя навигация */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 65px;
+      background: rgba(28, 28, 30, 0.95);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #8e8e93;
+      font-size: 11px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .nav-btn .icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+
+    .nav-btn.active {
+      color: #007aff;
+    }
+
+    /* Раздел соперников */
+    .corner-box {
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    .red-corner { background: rgba(255, 59, 48, 0.15); border: 1px solid rgba(255, 59, 48, 0.3); }
+    .blue-corner { background: rgba(0, 122, 255, 0.15); border: 1px solid rgba(0, 122, 255, 0.3); }
+    .vs-divider { text-align: center; font-weight: bold; margin: 10px 0; color: #ff9500; }
+  </style>
 </head>
 <body>
 
-    <!-- 1. ЭКРАН АНКЕТЫ -->
-    <div id="screen-form" class="screen">
-        <div class="card">
-            <h2>ЛИГА RFC 20</h2>
-            <div class="input-group">
-                <label>ФИО участника</label>
-                <input type="text" id="fullName" placeholder="Иванов Иван Иванович">
-            </div>
-            <div class="input-group">
-                <label>Клуб / Команда</label>
-                <input type="text" id="club" placeholder="Название клуба или «Самостоятельно»">
-            </div>
-            <div class="slider-container">
-                <div class="slider-header">
-                    <span>Возраст:</span>
-                    <span class="val-badge" id="ageVal">18 лет (+18)</span>
-                </div>
-                <input type="range" id="ageSlider" min="6" max="25" value="18">
-            </div>
-            <div class="slider-container">
-                <div class="slider-header">
-                    <span>Весовая категория:</span>
-                    <span class="val-badge" id="weightVal">70 кг</span>
-                </div>
-                <input type="range" id="weightSlider" min="0" max="7" value="3">
-            </div>
-            <button id="btn-submit" onclick="submitForm()">ОТПРАВИТЬ ЗАЯВКУ</button>
-        </div>
+  <!-- 1. ЭКРАН РЕГИСТРАЦИИ / ЗАЯВКИ -->
+  <div id="screen-form" class="screen active">
+    <div class="card">
+      <h2>Заявка на участие</h2>
+      
+      <label>ФИО / Псевдоним:</label>
+      <input type="text" id="input-name" placeholder="Иван Иванов">
+
+      <label>Клуб / Город:</label>
+      <input type="text" id="input-club" placeholder="БК Спарта">
+
+      <label>Возраст:</label>
+      <select id="select-age" onchange="updateCategories()"></select>
+
+      <label>Весовая категория:</label>
+      <select id="select-category"></select>
+
+      <button class="btn-primary" onclick="submitForm()">Подать заявку</button>
     </div>
+  </div>
 
-    <!-- 2. ЭКРАН ПОИСКА -->
-    <div id="screen-searching" class="screen">
-        <div class="card">
-            <h2>ЛИЧНЫЙ КАБИНЕТ</h2>
-            <div style="text-align: center;">
-                <div class="status-badge status-searching">
-                    <span class="pulse-loader"></span> ПОИСК СОПЕРНИКА
-                </div>
-            </div>
-            <div class="info-row"><span class="info-label">Боец:</span><span class="info-val" id="search-name">-</span></div>
-            <div class="info-row"><span class="info-label">Клуб:</span><span class="info-val" id="search-club">-</span></div>
-            <div class="info-row"><span class="info-label">Дивизион:</span><span class="info-val" id="search-cat">-</span></div>
-            <p style="text-align: center; font-size: 13px; color: #888; margin-top: 20px;">
-                ⏳ Страница автоматически обновится, как только найдеётся пара!
-            </p>
-            <button class="btn-secondary" onclick="showScreen('screen-form')">✏️ Изменить анкету</button>
-        </div>
+  <!-- 2. ЭКРАН ОЖИДАНИЯ -->
+  <div id="screen-searching" class="screen">
+    <div class="card" style="text-align: center;">
+      <h2>⏳ Поиск соперника</h2>
+      <p style="color: #8e8e93; margin-top: 8px;">Ваша заявка принята. Ожидайте подбора пары в вашей весовой категории.</p>
     </div>
+  </div>
 
-    <!-- 3. ЭКРАН КАРТОЧКИ БОЯ (VS) -->
-    <div id="screen-paired" class="screen">
-        <div class="card">
-            <h2>КАРТОЧКА БОЯ</h2>
-            <div style="text-align: center;">
-                <div class="status-badge status-paired">🟢 ПАРА СФОРМИРОВАНА</div>
-            </div>
-            <p style="text-align: center; font-size: 13px; color: #aaa; margin-bottom: 15px;" id="pair-cat">
-                Дивизион: -
-            </p>
-            <div class="corner-box red-corner">
-                <div class="corner-title">Красный угол (Вы)</div>
-                <div class="fighter-name" id="my-name">-</div>
-                <div class="fighter-club" id="my-club">-</div>
-            </div>
-            <div class="vs-divider">VS</div>
-            <div class="corner-box blue-corner">
-                <div class="corner-title">Синий угол (Соперник)</div>
-                <div class="fighter-name" id="opp-name">-</div>
-                <div class="fighter-club" id="opp-club">-</div>
-            </div>
-        </div>
+  <!-- 3. ЭКРАН НАЙДЕННОГО БОЯ -->
+  <div id="screen-paired" class="screen">
+    <div class="card">
+      <h2 style="text-align: center; color: #34c759;">🥊 Бой сформирован!</h2>
+      
+      <div class="corner-box red-corner">
+        <div style="font-size: 12px; color: #ff3b30; font-weight: bold;">КРАСНЫЙ УГОЛ</div>
+        <div id="my-name" style="font-size: 16px; font-weight: bold; margin-top: 4px;">-</div>
+        <div id="my-club" style="font-size: 13px; color: #8e8e93;">-</div>
+      </div>
+
+      <div class="vs-divider">VS</div>
+
+      <div class="corner-box blue-corner">
+        <div style="font-size: 12px; color: #007aff; font-weight: bold;">СИНИЙ УГОЛ (Соперник)</div>
+        <div id="opp-name" style="font-size: 16px; font-weight: bold; margin-top: 4px;">-</div>
+        <div id="opp-club" style="font-size: 13px; color: #8e8e93;">-</div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+  <!-- 4. ЭКРАН ПРОФИЛЯ -->
+  <div id="screen-profile" class="screen">
+    <div class="card">
+      <div class="profile-header">
+        <div class="avatar" id="user-avatar-icon">👤</div>
+        <div class="user-meta">
+          <h3 id="user-profile-name">Боец</h3>
+          <span class="badge">Участник лиги</span>
+        </div>
+      </div>
+      
+      <div class="menu-list">
+        <div class="menu-item" onclick="alert('Раздел оплаты в разработке')">
+          <span>💳 Оплата</span>
+          <span class="arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="switchTab('screen-searching')">
+          <span>⏳ Статус поиска</span>
+          <span class="arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="alert('Новостей пока нет')">
+          <span>📢 Новости</span>
+          <span class="arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="switchTab('screen-form')">
+          <span>ℹ️ Основная информация</span>
+          <span class="arrow">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Укажи URL твоего API сервера (при тесте локально через ngrok или IP)
-        const API_URL = "https://1aa80dddced3c0.lhr.life"; 
+  <!-- 5. ЭКРАН ПОДДЕРЖКИ -->
+  <div id="screen-support" class="screen">
+    <div class="card">
+      <h2>Техническая поддержка</h2>
+      <p style="color: #8e8e93; font-size: 14px;">Если у вас возникли вопросы по регламенту или работе приложения, напишите нашему администратору.</p>
+      
+      <div class="support-ticket-btn" onclick="openSupport()">
+        <div class="plus-icon">+</div>
+        <div class="support-info">
+          <strong>Создать тикет</strong>
+          <p>Есть проблема или вопрос? Мы поможем!</p>
+        </div>
+        <span class="arrow">›</span>
+      </div>
+    </div>
+  </div>
 
-        const userId = tg.initDataUnsafe?.user?.id || 12345678; // Фолбэк для тестов
+  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-main" onclick="switchTab('screen-form')">
+      <span class="icon">🥊</span>
+      <span class="label">Заявка</span>
+    </button>
+    <button class="nav-btn" id="nav-support" onclick="switchTab('screen-support')">
+      <span class="icon">🎧</span>
+      <span class="label">Помощь</span>
+    </button>
+    <button class="nav-btn" id="nav-profile" onclick="switchTab('screen-profile')">
+      <span class="icon">👤</span>
+      <span class="label">Профиль</span>
+    </button>
+  </nav>
 
-        const RFC_DATA = {
-            "6-7": ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг", "+32 кг"],
-            "8-9": ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"],
-            "10-11": ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "+65 кг"],
-            "12-13": ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг", "+75 кг"],
-            "14-15": ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг", "+85 кг"],
-            "16-17": ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"],
-            "18+": ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"]
-        };
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        const ageSlider = document.getElementById('ageSlider');
-        const weightSlider = document.getElementById('weightSlider');
-        const ageVal = document.getElementById('ageVal');
-        const weightVal = document.getElementById('weightVal');
+    // Твой актуальный хост сервера (меняется при перезапуске SSH-туннеля)
+    const API_URL = "https://1aa80dddced3c0.lhr.life"; 
 
-        let currentAgeGroup = "18+";
-        let currentWeights = RFC_DATA["18+"];
+    const userId = tg.initDataUnsafe?.user?.id || 12345678;
 
-        function getAgeGroup(age) {
-            if (age <= 7) return "6-7";
-            if (age <= 9) return "8-9";
-            if (age <= 11) return "10-11";
-            if (age <= 13) return "12-13";
-            if (age <= 15) return "14-15";
-            if (age <= 17) return "16-17";
-            return "18+";
-        }
+    // Автоматическая подстановка имени пользователя Telegram в профиль
+    if (tg?.initDataUnsafe?.user) {
+      const userName = tg.initDataUnsafe.user.first_name || 'Боец';
+      document.getElementById('user-profile-name').innerText = userName;
+      document.getElementById('input-name').value = userName;
+    }
 
-        function updateWeightSlider() {
-            const age = parseInt(ageSlider.value);
-            currentAgeGroup = getAgeGroup(age);
-            currentWeights = RFC_DATA[currentAgeGroup];
+    const RFC_DATA = {
+      "6-7": ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг", "+32 кг"],
+      "8-9": ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"],
+      "10-11": ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "+65 кг"],
+      "12-13": ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг", "+75 кг"],
+      "14-15": ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг", "+85 кг"],
+      "16-17": ["48 кг", "52 кг", "55 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"],
+      "18+": ["57 кг", "61 кг", "65 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"]
+    };
 
-            ageVal.innerText = `${age} лет (${currentAgeGroup})`;
-            weightSlider.max = currentWeights.length - 1;
-            if (parseInt(weightSlider.value) >= currentWeights.length) {
-                weightSlider.value = currentWeights.length - 1;
-            }
-            weightVal.innerText = currentWeights[weightSlider.value];
-        }
+    // Заполнение возрастов
+    const ageSelect = document.getElementById('select-age');
+    Object.keys(RFC_DATA).forEach(age => {
+      const opt = document.createElement('option');
+      opt.value = age;
+      opt.textContent = age + " лет";
+      ageSelect.appendChild(opt);
+    });
 
-        ageSlider.addEventListener('input', updateWeightSlider);
-        weightSlider.addEventListener('input', () => { weightVal.innerText = currentWeights[weightSlider.value]; });
-        updateWeightSlider();
+    function updateCategories() {
+      const catSelect = document.getElementById('select-category');
+      catSelect.innerHTML = '';
+      const selectedAge = ageSelect.value;
+      RFC_DATA[selectedAge].forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+      });
+    }
+    updateCategories();
 
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        }
+    // Переключение вкладок
+    function switchTab(screenId) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      
+      const targetScreen = document.getElementById(screenId);
+      if (targetScreen) {
+        targetScreen.classList.add('active');
+      }
 
-        function renderData(data) {
-            if (data.status === 'paired') {
-                document.getElementById('my-name').innerText = data.name;
-                document.getElementById('my-club').innerText = data.club;
-                document.getElementById('opp-name').innerText = data.opp_name;
-                document.getElementById('opp-club').innerText = data.opp_club;
-                document.getElementById('pair-cat').innerText = "Дивизион: " + data.category;
-                showScreen('screen-paired');
-            } else if (data.status === 'searching') {
-                document.getElementById('search-name').innerText = data.name;
-                document.getElementById('search-club').innerText = data.club;
-                document.getElementById('search-cat').innerText = data.category;
-                showScreen('screen-searching');
-            } else {
-                showScreen('screen-form');
-            }
-        }
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      
+      if (screenId === 'screen-form' || screenId === 'screen-searching' || screenId === 'screen-paired') {
+        document.getElementById('nav-main')?.classList.add('active');
+      } else if (screenId === 'screen-support') {
+        document.getElementById('nav-support')?.classList.add('active');
+      } else if (screenId === 'screen-profile') {
+        document.getElementById('nav-profile')?.classList.add('active');
+      }
+    }
 
-        // Проверка статуса при входе
-        async function checkStatus() {
-            try {
-                const res = await fetch(`${API_URL}/api/status?user_id=${userId}`);
-                const data = await res.json();
-                renderData(data);
-            } catch (e) {
-                console.error("Ошибка сети:", e);
-                showScreen('screen-form');
-            }
-        }
+    // Переход в техподдержку (Замени username на свой!)
+    function openSupport() {
+      const supportUsername = "https://t.me/ninamarsh";
+      if (window.Telegram?.WebApp) {
+        Telegram.WebApp.openTelegramLink(supportUsername);
+      } else {
+        window.open(supportUsername, "_blank");
+      }
+    }
 
-        // Отправка формы
-        async function submitForm() {
-            const name = document.getElementById('fullName').value.trim();
-            const club = document.getElementById('club').value.trim() || 'Самостоятельно';
-            if (!name) { alert('Введи ФИО!'); return; }
+    // Отправка формы
+    async function submitForm() {
+      const name = document.getElementById('input-name').value;
+      const club = document.getElementById('input-club').value;
+      const category = `${ageSelect.value} | ${document.getElementById('select-category').value}`;
 
-            const category = `${currentAgeGroup} лет (${currentWeights[weightSlider.value]})`;
+      if (!name || !club) {
+        alert("Заполните все поля!");
+        return;
+      }
 
-            try {
-                const res = await fetch(`${API_URL}/api/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, full_name: name, club, category })
-                });
-                const data = await res.json();
-                renderData(data);
-            } catch (e) {
-                alert("Ошибка соединения с сервером!");
-            }
-        }
+      try {
+        const res = await fetch(`${API_URL}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId, full_name: name, club: club, category: category })
+        });
+        const data = await res.json();
+        renderData(data);
+      } catch (e) {
+        alert("Ошибка соединения с сервером!");
+      }
+    }
 
-        // Фоновый опрос (раз в 3 секунды), если боец находится в поиске
-        setInterval(async () => {
-            const searchScreen = document.getElementById('screen-searching');
-            if (searchScreen.classList.contains('active')) {
-                await checkStatus();
-            }
-        }, 3000);
+    // Опрос состояния боя
+    async function checkStatus() {
+      try {
+        const res = await fetch(`${API_URL}/api/status?user_id=${userId}`);
+        const data = await res.json();
+        renderData(data);
+      } catch (e) {
+        console.log(e);
+      }
+    }
 
-        checkStatus();
-    </script>
+    function renderData(data) {
+      if (data.status === 'searching') {
+        switchTab('screen-searching');
+      } else if (data.status === 'paired') {
+        switchTab('screen-paired');
+        document.getElementById('my-name').innerText = data.my_name;
+        document.getElementById('my-club').innerText = data.my_club;
+        document.getElementById('opp-name').innerText = data.opponent_name;
+        document.getElementById('opp-club').innerText = data.opponent_club;
+      }
+    }
+
+    // Фоновый опрос (раз в 3 секунды), если боец в поиске
+    setInterval(async () => {
+      const searchScreen = document.getElementById('screen-searching');
+      if (searchScreen.classList.contains('active')) {
+        await checkStatus();
+      }
+    }, 3000);
+
+    checkStatus();
+  </script>
 </body>
 </html>
