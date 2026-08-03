@@ -10,6 +10,7 @@
             --bg-color: #0b0b0d;
             --card-bg: #16161a;
             --accent-red: #e50914;
+            --accent-glow: rgba(229, 9, 20, 0.9);
             --text-main: #ffffff;
             --text-muted: #a0a0ab;
             --border-color: #26262e;
@@ -39,12 +40,12 @@
             width: 100%;
         }
 
-        /* === КОНТЕЙНЕР ЛОГОТИПА И БЕГАЮЩАЯ ТОЧКА === */
+        /* === КОНТЕЙНЕР ЛОГОТИПА И БЕГАЮЩАЯ ТОЧКА ОБВОДКИ === */
         .logo-box {
             position: relative;
             width: 240px;
-            margin: 10px auto 25px auto;
-            padding: 16px;
+            margin: 15px auto 25px auto;
+            padding: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -53,12 +54,12 @@
             overflow: hidden;
         }
 
-        /* Тонкая рамка с вращающимся красным огоньком */
+        /* Тонкая рамка с бегающим красным огоньком */
         .logo-box::before {
             content: '';
             position: absolute;
-            width: 160%;
-            height: 160%;
+            width: 150%;
+            height: 150%;
             background: conic-gradient(
                 transparent 0deg, 
                 transparent 300deg, 
@@ -68,7 +69,7 @@
             animation: rotateDot 2.5s linear infinite;
         }
 
-        /* Перекрытие, создающее внутренний фон */
+        /* Подложка контейнера */
         .logo-box::after {
             content: '';
             position: absolute;
@@ -83,20 +84,21 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Вырезаем чёрный фон с самого логотипа прямо в браузере */
+        /* Вырезаем чёрный фон логотипа прямо в браузере */
         .logo-img {
             position: relative;
             z-index: 2;
             width: 100%;
             height: auto;
             display: block;
-            mix-blend-mode: screen; /* Делает чёрный фон файла прозрачным */
+            mix-blend-mode: screen;
         }
 
         /* Статичный логотип для остальных экранов */
         .logo-static-container {
             text-align: center;
             margin-bottom: 20px;
+            padding: 10px;
         }
 
         .logo-static {
@@ -383,7 +385,7 @@
         tg.expand();
 
         // Твой актуальный хост туннеля
-        const API_URL = "https://a90c8565c40889.lhr.life";
+        const API_URL = "https://db71926e7a8a98.lhr.life";
         const userId = tg.initDataUnsafe?.user?.id || 12345678;
 
         if (tg.initDataUnsafe?.user) {
@@ -420,11 +422,18 @@
             }
 
             try {
-                const res = await fetch(`${API_URL}/api/register`, {
+                // Добавлен timestamp t=... и cache: 'no-cache' против сбоев Safari/iOS
+                const res = await fetch(`${API_URL}/api/register?t=${Date.now()}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    cache: 'no-cache',
                     body: JSON.stringify({ user_id: userId, full_name: name, club: club, category: category })
                 });
+
+                if (!res.ok) {
+                    throw new Error(`Ошибка сервера: ${res.status}`);
+                }
+
                 const data = await res.json();
                 renderData(data);
             } catch (e) {
