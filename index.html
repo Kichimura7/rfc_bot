@@ -1,455 +1,358 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RFC League</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-color: #0b0b0d;
-            --card-bg: #16161a;
-            --accent-red: #e50914;
-            --accent-glow: rgba(229, 9, 20, 0.9);
-            --text-main: #ffffff;
-            --text-muted: #a0a0ab;
-            --border-color: #26262e;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>RFC App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+    body {
+      background-color: #0b0c10;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 90px; /* Отступ под нижнее меню */
+      overflow-x: hidden;
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            padding-bottom: 80px;
-        }
+    /* Фоновый неновый блюр */
+    .bg-glow {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(255, 42, 42, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
 
-        .container {
-            padding: 20px 16px;
-            max-width: 480px;
-            margin: 0 auto;
-            width: 100%;
-        }
+    /* Шапка с анимированным логотипом */
+    .app-header {
+      position: relative;
+      z-index: 1;
+      padding: 20px 16px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-        /* === КОНТЕЙНЕР ЛОГОТИПА И БЕГАЮЩАЯ ТОЧКА ОБВОДКИ === */
-        .logo-box {
-            position: relative;
-            width: 240px;
-            margin: 15px auto 25px auto;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 16px;
-            background: #0b0b0d;
-            overflow: hidden;
-        }
+    .logo-box {
+      position: relative;
+      width: 140px;
+      height: 140px;
+    }
 
-        /* Тонкая рамка с бегающим красным огоньком */
-        .logo-box::before {
-            content: '';
-            position: absolute;
-            width: 150%;
-            height: 150%;
-            background: conic-gradient(
-                transparent 0deg, 
-                transparent 300deg, 
-                var(--accent-red) 340deg, 
-                #ffffff 360deg
-            );
-            animation: rotateDot 2.5s linear infinite;
-        }
+    .logo-img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: invert(1) brightness(1.2);
+    }
 
-        /* Подложка контейнера */
-        .logo-box::after {
-            content: '';
-            position: absolute;
-            inset: 2px;
-            background: #0b0b0d;
-            border-radius: 14px;
-            z-index: 1;
-        }
+    .logo-shine {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: invert(1) sepia(1) saturate(10000%) hue-rotate(330deg) drop-shadow(0 0 10px #ff2a2a);
+      -webkit-mask-image: linear-gradient(120deg, transparent 0%, transparent 38%, black 50%, transparent 62%, transparent 100%);
+      mask-image: linear-gradient(120deg, transparent 0%, transparent 38%, black 50%, transparent 62%, transparent 100%);
+      -webkit-mask-size: 250% 250%;
+      mask-size: 250% 250%;
+      animation: laserSweep 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-        @keyframes rotateDot {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+    @keyframes laserSweep {
+      0% { -webkit-mask-position: 140% 140%; mask-position: 140% 140%; }
+      80%, 100% { -webkit-mask-position: -40% -40%; mask-position: -40% -40%; }
+    }
 
-        /* Вырезаем чёрный фон логотипа прямо в браузере */
-        .logo-img {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            height: auto;
-            display: block;
-            mix-blend-mode: screen;
-        }
+    /* Экранные секции */
+    .screen {
+      display: none;
+      padding: 0 16px;
+      position: relative;
+      z-index: 1;
+    }
 
-        /* Статичный логотип для остальных экранов */
-        .logo-static-container {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 10px;
-        }
+    .screen.active {
+      display: block;
+    }
 
-        .logo-static {
-            width: 170px;
-            height: auto;
-            mix-blend-mode: screen;
-        }
+    /* Карточки и блоки */
+    .card {
+      background: rgba(18, 19, 23, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
 
-        /* === КАРТОЧКИ И ФОРМЫ === */
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-        }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ff2a2a;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
 
-        h2 {
-            font-size: 18px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 16px;
-            color: var(--text-main);
-            text-align: center;
-        }
+    /* Элементы форм и списков */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 14px;
+    }
 
-        .form-group {
-            margin-bottom: 14px;
-        }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #8a8d93; }
+    .info-val { font-weight: 600; color: #fff; text-align: right; }
 
-        label {
-            display: block;
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
+    .btn-action {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ff2a2a 0%, #a80000 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(255, 42, 42, 0.3);
+    }
 
-        input, select {
-            width: 100%;
-            padding: 12px 14px;
-            background: #0f0f12;
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            color: var(--text-main);
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+    .btn-action:active { transform: scale(0.98); }
 
-        input:focus, select:focus {
-            border-color: var(--accent-red);
-        }
+    /* Нижнее меню навигации (Tab Bar) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: rgba(12, 13, 16, 0.95);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
 
-        .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: var(--accent-red);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            margin-top: 10px;
-            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-        }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #6e7178;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s;
+      width: 20%;
+    }
 
-        .btn-submit:active {
-            transform: scale(0.98);
-        }
+    .nav-item.active {
+      color: #ff2a2a;
+    }
 
-        /* === ИНФО-БЛОКИ === */
-        .info-box {
-            background: #0f0f12;
-            border-left: 3px solid var(--accent-red);
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-align: left;
-        }
-
-        .info-icon {
-            font-size: 20px;
-        }
-
-        .info-text .title {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .info-text .value {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        /* === ЭКРАНЫ === */
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        /* === НИЖНЯЯ НАВИГАЦИЯ === */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 65px;
-            background: #121215;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 11px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            width: 33%;
-        }
-
-        .nav-btn .icon {
-            font-size: 20px;
-        }
-
-        .nav-btn.active {
-            color: var(--accent-red);
-        }
-    </style>
+    .nav-icon {
+      font-size: 20px;
+      margin-bottom: 3px;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        
-        <!-- 1. ЭКРАН: ЗАЯВКА -->
-        <div id="screen-form" class="screen active">
-            <div class="logo-box">
-                <img src="logo.png" alt="RFC Logo" class="logo-img">
-            </div>
+  <div class="bg-glow"></div>
 
-            <div class="card">
-                <h2>Заявка на участие</h2>
-                
-                <div class="form-group">
-                    <label>ФИО / Псевдоним</label>
-                    <input type="text" id="input-name" placeholder="Введите имя">
-                </div>
+  <!-- Шапка с анимированным логотипом RFC -->
+  <div class="app-header">
+    <div class="logo-box">
+      <img src="image_4.png" alt="RFC Logo" class="logo-img" />
+      <img src="image_4.png" alt="RFC Logo Shine" class="logo-shine" />
+    </div>
+  </div>
 
-                <div class="form-group">
-                    <label>Клуб / Город</label>
-                    <input type="text" id="input-club" placeholder="Название клуба или город">
-                </div>
-
-                <div class="form-group">
-                    <label>Весовая категория</label>
-                    <select id="input-category">
-                        <option value="57 кг">До 57 кг</option>
-                        <option value="61 кг">До 61 кг</option>
-                        <option value="66 кг">До 66 кг</option>
-                        <option value="70 кг">До 70 кг</option>
-                        <option value="77 кг">До 77 кг</option>
-                        <option value="84 кг">До 84 кг</option>
-                        <option value="93 кг">До 93 кг</option>
-                        <option value="+93 кг">Свыше 93 кг</option>
-                    </select>
-                </div>
-
-                <button class="btn-submit" onclick="submitForm()">Подать заявку</button>
-            </div>
-        </div>
-
-        <!-- 2. ЭКРАН: ПОИСК СОПЕРНИКА -->
-        <div id="screen-searching" class="screen">
-            <div class="logo-static-container">
-                <img src="logo.png" alt="RFC Logo" class="logo-static">
-            </div>
-
-            <div class="card" style="text-align: center;">
-                <h2>⏳ Поиск соперника</h2>
-                <p style="color: var(--text-muted); font-size: 13px;">Ваша заявка принята. Ожидайте подбора пары в вашей весовой категории.</p>
-                
-                <div class="info-box">
-                    <div class="info-icon">⚖️</div>
-                    <div class="info-text">
-                        <div class="title">Дата и время взвешивания</div>
-                        <div class="value">15 Августа, 12:00</div>
-                    </div>
-                </div>
-
-                <div class="info-box">
-                    <div class="info-icon">📍</div>
-                    <div class="info-text">
-                        <div class="title">Адрес проведения</div>
-                        <div class="value">г. Москва, ул. Спортивная, д. 10 (БК «Арена»)</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. ЭКРАН: ПОМОЩЬ -->
-        <div id="screen-support" class="screen">
-            <div class="logo-static-container">
-                <img src="logo.png" alt="RFC Logo" class="logo-static">
-            </div>
-
-            <div class="card">
-                <h2>Поддержка и регламент</h2>
-                <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 12px;">
-                    По всем вопросам организационного характера, правилам турнира и изменению данных обращайтесь к администратору лиги.
-                </p>
-                <div class="info-box">
-                    <div class="info-icon">💬</div>
-                    <div class="info-text">
-                        <div class="title">Связь с организатором</div>
-                        <div class="value">@rfc_admin</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. ЭКРАН: ПРОФИЛЬ -->
-        <div id="screen-profile" class="screen">
-            <div class="logo-static-container">
-                <img src="logo.png" alt="RFC Logo" class="logo-static">
-            </div>
-
-            <div class="card">
-                <h2>Профиль бойца</h2>
-                <div style="margin-top: 10px;">
-                    <div style="margin-bottom: 12px;">
-                        <span style="color: var(--text-muted); font-size: 12px;">Имя:</span>
-                        <div id="user-profile-name" style="font-size: 16px; font-weight: bold;">-</div>
-                    </div>
-                    <div style="margin-bottom: 12px;">
-                        <span style="color: var(--text-muted); font-size: 12px;">Telegram ID:</span>
-                        <div id="user-profile-id" style="font-size: 14px; font-weight: 500; color: var(--text-muted);">-</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+  <!-- 1. Вкладка: ЗАЯВКА И ОПЛАТА -->
+  <div id="tab-apply" class="screen active">
+    <div class="card">
+      <div class="card-title">Подача заявки</div>
+      <div class="info-row">
+        <span class="info-label">Статус:</span>
+        <span class="info-val" style="color: #ffaa00;">Ожидает оплаты</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Орг. взнос:</span>
+        <span class="info-val">3 000 ₽</span>
+      </div>
+      <button class="btn-action" onclick="alert('Переход к оплате...')">Оплатить взнос</button>
     </div>
 
-    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
-    <div class="bottom-nav">
-        <button class="nav-btn active" id="btn-nav-form" onclick="switchTab('form')">
-            <span class="icon">🥊</span>
-            <span>Заявка</span>
-        </button>
-        <button class="nav-btn" id="btn-nav-support" onclick="switchTab('support')">
-            <span class="icon">🎧</span>
-            <span>Помощь</span>
-        </button>
-        <button class="nav-btn" id="btn-nav-profile" onclick="switchTab('profile')">
-            <span class="icon">👤</span>
-            <span>Профиль</span>
-        </button>
+    <div class="card">
+      <div class="card-title">Реквизиты для перевода</div>
+      <div class="info-row">
+        <span class="info-label">Банк:</span>
+        <span class="info-val">Т-Банк / Сбер</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Номер карты:</span>
+        <span class="info-val">2202 2024 0000 1234</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Получатель:</span>
+        <span class="info-val">Оргкомитет RFC</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Вкладка: ПОИСК СОПЕРНИКА -->
+  <div id="tab-match" class="screen">
+    <div class="card">
+      <div class="card-title">Поиск пары (1v1)</div>
+      <div class="info-row">
+        <span class="info-label">Твоя категория:</span>
+        <span class="info-val">До 77 кг (Adults)</span>
+      </div>
+      <button class="btn-action" onclick="alert('Поиск активных соперников...')">Найти соперника</button>
     </div>
 
-    <script>
+    <div class="card">
+      <div class="card-title">Возможные оппоненты</div>
+      <div class="info-row">
+        <span class="info-label">Александр М. (76.5 кг)</span>
+        <span class="info-val" style="color: #ff2a2a; cursor: pointer;" onclick="alert('Вызов отправлен!')">Вызвать</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Дмитрий К. (77.0 кг)</span>
+        <span class="info-val" style="color: #ff2a2a; cursor: pointer;" onclick="alert('Вызов отправлен!')">Вызвать</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Вкладка: ИНФОРМАЦИЯ И ВЗВЕШИВАНИЕ -->
+  <div id="tab-info" class="screen">
+    <div class="card">
+      <div class="card-title">Место и Время</div>
+      <div class="info-row">
+        <span class="info-label">Локация:</span>
+        <span class="info-val">г. Москва, Арена RFC</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Адрес:</span>
+        <span class="info-val">ул. Sports, д. 10, стр. 2</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Взвешивание:</span>
+        <span class="info-val">10:00 - 12:00 (Суббота)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Начало боёв:</span>
+        <span class="info-val">13:00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Вкладка: НОВОСТИ -->
+  <div id="tab-news" class="screen">
+    <div class="card">
+      <div class="card-title">Главный кард сформирован!</div>
+      <p style="font-size: 13px; color: #ccc; line-height: 1.4;">
+        Опубликован полный список поединков на предстоящий турнир RFC. Проверяйте сетку в личном кабинете.
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">Правила взвешивания</div>
+      <p style="font-size: 13px; color: #ccc; line-height: 1.4;">
+        Допускается перевес не более 300 грамм. Не прошедшие взвешивание участники дисквалифицируются.
+      </p>
+    </div>
+  </div>
+
+  <!-- 5. Вкладка: ПРОФИЛЬ -->
+  <div id="tab-profile" class="screen">
+    <div class="card">
+      <div class="card-title">Профиль бойца</div>
+      <div class="info-row">
+        <span class="info-label">Имя:</span>
+        <span class="info-val">Участник #104</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Весовая:</span>
+        <span class="info-val">77 кг</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Рекорд:</span>
+        <span class="info-val">2-0-0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Нижняя панель навигации -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('tab-apply', this)">
+      <span class="nav-icon">📝</span>
+      <span>Заявка</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-match', this)">
+      <span class="nav-icon">🥊</span>
+      <span>Соперник</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-info', this)">
+      <span class="nav-icon">📍</span>
+      <span>Инфо</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-news', this)">
+      <span class="nav-icon">📰</span>
+      <span>Новости</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-profile', this)">
+      <span class="nav-icon">👤</span>
+      <span>Профиль</span>
+    </div>
+  </div>
+
+  <script>
+    // Инициализация Telegram Mini App
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
+        tg.ready();
         tg.expand();
+      }
+    });
 
-        // Твой актуальный хост туннеля
-        const API_URL = "https://138-124-14-138.nip.io";
-        const userId = tg.initDataUnsafe?.user?.id || 12345678;
+    // Переключение вкладок (Tabs)
+    function switchTab(tabId, el) {
+      // Плавная вибрация при переключении
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.selectionChanged();
+      }
 
-        if (tg.initDataUnsafe?.user) {
-            const userName = tg.initDataUnsafe.user.first_name || 'Боец';
-            document.getElementById('input-name').value = userName;
-            document.getElementById('user-profile-name').innerText = userName;
-            document.getElementById('user-profile-id').innerText = userId;
-        }
+      // Скрываем все экраны
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      // Снимаем подсветку со всех кнопок навигации
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
-        function switchTab(tabName) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      // Показываем нужный экран и подсвечиваем кнопку
+      document.getElementById(tabId).classList.add('active');
+      el.classList.add('active');
+    }
+  </script>
 
-            if (tabName === 'form') {
-                document.getElementById('screen-form').classList.add('active');
-                document.getElementById('btn-nav-form').classList.add('active');
-            } else if (tabName === 'support') {
-                document.getElementById('screen-support').classList.add('active');
-                document.getElementById('btn-nav-support').classList.add('active');
-            } else if (tabName === 'profile') {
-                document.getElementById('screen-profile').classList.add('active');
-                document.getElementById('btn-nav-profile').classList.add('active');
-            }
-        }
-
-        async function submitForm() {
-            const name = document.getElementById('input-name').value;
-            const club = document.getElementById('input-club').value;
-            const category = document.getElementById('input-category').value;
-
-            if (!name || !club) {
-                alert("Заполните все поля!");
-                return;
-            }
-
-            try {
-                // Добавлен timestamp t=... и cache: 'no-cache' против сбоев Safari/iOS
-                const res = await fetch(`${API_URL}/api/register?t=${Date.now()}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    cache: 'no-cache',
-                    body: JSON.stringify({ user_id: userId, full_name: name, club: club, category: category })
-                });
-
-                if (!res.ok) {
-                    throw new Error(`Ошибка сервера: ${res.status}`);
-                }
-
-                const data = await res.json();
-                renderData(data);
-            } catch (e) {
-                alert('Ошибка отправки: ' + (e.message || e));
-            }
-        }
-
-        function renderData(data) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-
-            if (data.status === 'searching') {
-                document.getElementById('screen-searching').classList.add('active');
-            } else {
-                document.getElementById('screen-form').classList.add('active');
-            }
-        }
-    </script>
 </body>
 </html>
