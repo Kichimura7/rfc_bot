@@ -33,7 +33,40 @@
       pointer-events: none;
       z-index: 0;
     }
+    /* Красные ползунки как на макете */
+.custom-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #ff3338;
+  border-radius: 3px;
+  outline: none;
+  margin: 10px 0;
+}
 
+/* Белая круглая пипка ползунка (Chrome, Safari, iOS Telegram WebApp) */
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
+
+/* Белая круглая пипка (Firefox) */
+.custom-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+}
     /* Шапка с анимированным логотипом */
     .app-header {
       position: relative;
@@ -188,28 +221,49 @@
     </div>
   </div>
   <!-- ЭКРАН 0: Форма регистрации -->
+<!-- ЭКРАН 0: Форма регистрации -->
 <div id="screen-application" class="screen active">
   <div class="card">
-    <h3 style="color: #ff3b30; margin-bottom: 15px; font-weight: 800; text-align: center;">РЕГИСТРАЦИЯ УЧАСТНИКА</h3>
-    
-    <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
-      <label style="font-size: 13px; color: #8e8e93;">ФИО полностью</label>
-      <input type="text" id="reg-fullname" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
+    <h3 style="color: #ff3338; margin-bottom: 20px; font-weight: 800; text-align: center;">ЛИГА RFC 20</h3>
 
-     <!-- Ползунок: Возраст -->
-      <label style="font-size: 13px; color: #8e8e93;">Возраст: <strong id="age-val" style="color: #fff;">18</strong> лет</label>
-      <input type="range" id="reg-age" min="14" max="60" value="18" step="1" oninput="document.getElementById('age-val').innerText = this.value" style="width: 100%; accent-color: #ff3338; margin-bottom: 12px; cursor: pointer;">
+    <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+      <!-- ФИО -->
+      <div>
+        <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">ФИО участника</label>
+        <input type="text" id="reg-fullname" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
+      </div>
 
-      <!-- Ползунок: Весовая категория -->
-      <label style="font-size: 13px; color: #8e8e93;">Весовая категория: <strong id="weight-val" style="color: #fff;">70</strong> кг</label>
-      <input type="range" id="reg-weight" min="50" max="120" value="70" step="1" oninput="document.getElementById('weight-val').innerText = this.value" style="width: 100%; accent-color: #ff3338; margin-bottom: 12px; cursor: pointer;">
-      <label style="font-size: 13px; color: #8e8e93;">Клуб / Команда</label>
-      <input type="text" id="reg-club" placeholder="БК «Ахмат» / Самовыдвиженец" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
+      <!-- Клуб -->
+      <div>
+        <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">Клуб / Команда</label>
+        <input type="text" id="reg-club" placeholder="Название клуба или «Самостоятельно»" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
+      </div>
 
-      <button onclick="submitApplication()" class="pay-btn" style="margin-top: 10px;">
+      <!-- Ползунок Возраст -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 14px; font-weight: bold; color: #fff;">Возраст:</span>
+          <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="age-val">18</span> лет (18+)</span>
+        </div>
+        <input type="range" id="reg-age" min="6" max="60" value="18" step="1" class="custom-slider" oninput="document.getElementById('age-val').innerText = this.value">
+      </div>
+
+      <!-- Ползунок Весовая категория -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 14px; font-weight: bold; color: #fff;">Весовая категория:</span>
+          <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="weight-val">70</span> кг</span>
+        </div>
+        <input type="range" id="reg-weight" min="20" max="120" value="70" step="1" class="custom-slider" oninput="document.getElementById('weight-val').innerText = this.value">
+      </div>
+
+      <!-- Кнопка -->
+      <button onclick="submitApplication()" style="margin-top: 10px; background: #e5252a; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; text-transform: uppercase;">
         ОТПРАВИТЬ ЗАЯВКУ
       </button>
     </div>
+  </div>
+</div>
   </div>
 </div>
 
