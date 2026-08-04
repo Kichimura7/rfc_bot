@@ -505,11 +505,39 @@
         return;
       }
 
+      // Данные Telegram
+      let telegramId = 'Не указан';
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        const user = window.Telegram.WebApp.initDataUnsafe.user;
+        telegramId = user.username ? `@${user.username}` : `ID: ${user.id}`;
+      }
+
+      const payload = {
+        fullname: fullname,
+        club: club || 'Самостоятельно',
+        age: age,
+        weight: weight,
+        telegram_id: telegramId
+      };
+
+      // Сохраняем локально
       localStorage.setItem('rfc_applied', 'true');
       localStorage.setItem('rfc_fullname', fullname);
       localStorage.setItem('rfc_age', age);
       localStorage.setItem('rfc_weight', weight);
       localStorage.setItem('rfc_club', club || 'Самостоятельно');
+
+      // Отправка в Google Таблицу
+      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBwzfaryzyv0AuUmecW8aJlQZbJfQyUYqeTiE67U1KFw4V3pc4obmk5P2bJFgQbkhBkA/exec';
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error('Ошибка отправки:', err));
 
       updateProfileUI();
 
