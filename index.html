@@ -239,22 +239,22 @@
         <input type="text" id="reg-club" placeholder="Название клуба или «Самостоятельно»" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
       </div>
 
-      <!-- Ползунок Возраст -->
+<!-- Ползунок Возраст -->
       <div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <span style="font-size: 14px; font-weight: bold; color: #fff;">Возраст:</span>
-          <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="age-val">18</span> лет (18+)</span>
+          <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="age-val">18</span> лет</span>
         </div>
-        <input type="range" id="reg-age" min="6" max="60" value="18" step="1" class="custom-slider" oninput="document.getElementById('age-val').innerText = this.value">
+        <input type="range" id="reg-age" min="6" max="60" value="18" step="1" class="custom-slider" oninput="updateWeightOptions()">
       </div>
 
       <!-- Ползунок Весовая категория -->
       <div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <span style="font-size: 14px; font-weight: bold; color: #fff;">Весовая категория:</span>
-          <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="weight-val">70</span> кг</span>
+          <span style="font-size: 14px; font-weight: bold; color: #ff3338;" id="weight-val">70 кг</span>
         </div>
-        <input type="range" id="reg-weight" min="20" max="120" value="70" step="1" class="custom-slider" oninput="document.getElementById('weight-val').innerText = this.value">
+        <input type="range" id="reg-weight" min="0" max="0" value="0" step="1" class="custom-slider" oninput="updateWeightDisplay()">
       </div>
 
       <!-- Кнопка -->
@@ -456,6 +456,49 @@
       document.getElementById(tabId).classList.add('active');
       el.classList.add('active');
     }
+    // Весовые категории по регламенту RFC 20
+const weightRules = [
+  { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
+  { minAge: 8, maxAge: 9, weights: ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"] },
+  { minAge: 10, maxAge: 11, weights: ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг"] },
+  { minAge: 12, maxAge: 13, weights: ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг"] },
+  { minAge: 14, maxAge: 15, weights: ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг"] },
+  { minAge: 16, maxAge: 17, weights: ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"] },
+  { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
+];
+
+let currentWeights = [];
+
+function updateWeightOptions() {
+  const ageInput = document.getElementById('reg-age');
+  if (!ageInput) return;
+  const age = parseInt(ageInput.value);
+
+  document.getElementById('age-val').innerText = age + (age >= 18 ? ' (18+)' : '');
+
+  const group = weightRules.find(g => age >= g.minAge && age <= g.maxAge) || weightRules[weightRules.length - 1];
+  currentWeights = group.weights;
+
+  const weightInput = document.getElementById('reg-weight');
+  weightInput.min = 0;
+  weightInput.max = currentWeights.length - 1;
+
+  if (parseInt(weightInput.value) >= currentWeights.length) {
+    weightInput.value = Math.floor(currentWeights.length / 2);
+  }
+
+  updateWeightDisplay();
+}
+
+function updateWeightDisplay() {
+  const weightInput = document.getElementById('reg-weight');
+  if (!weightInput || !currentWeights.length) return;
+  const idx = weightInput.value;
+  const weightStr = currentWeights[idx] || currentWeights[0];
+  document.getElementById('weight-val').innerText = weightStr;
+}
+
+document.addEventListener("DOMContentLoaded", updateWeightOptions);
     // Функция обновления данных в профиле
 function updateProfileUI() {
   const fullname = localStorage.getItem('rfc_fullname');
@@ -471,11 +514,22 @@ function updateProfileUI() {
     // Отправка заявки и переход к оплате
 
 // Отправка заявки и переход к оплате
-function submitApplication() {
-  const fullname = document.getElementById('reg-fullname').value;
-  const age = document.getElementById('reg-age').value;
-  const weight = document.getElementById('reg-weight').value;
+const fullname = document.getElementById('reg-fullname').value;
   const club = document.getElementById('reg-club').value;
+  const age = document.getElementById('reg-age').value + ' лет';
+  const weight = document.getElementById('weight-val').innerText;
+
+  if (!fullname) {
+    alert('Пожалуйста, введите ФИО');
+    return;
+  }
+
+  // Сохраняем все данные в память браузера
+  localStorage.setItem('rfc_applied', 'true');
+  localStorage.setItem('rfc_fullname', fullname);
+  localStorage.setItem('rfc_age', age);
+  localStorage.setItem('rfc_weight', weight);
+  localStorage.setItem('rfc_club', club || 'Самовыдвиженец');
 
   if (!fullname) {
     alert('Пожалуйста, введите ФИО!');
@@ -502,7 +556,7 @@ function submitApplication() {
   
   // Показываем экран оплаты и реквизитов
   document.getElementById('tab-apply').classList.add('active');
-}
+
 
   </script>
 
