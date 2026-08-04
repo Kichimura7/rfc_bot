@@ -196,12 +196,13 @@
       <label style="font-size: 13px; color: #8e8e93;">ФИО полностью</label>
       <input type="text" id="reg-fullname" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
 
-      <label style="font-size: 13px; color: #8e8e93;">Возраст</label>
-      <input type="number" id="reg-age" placeholder="20" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
+     <!-- Ползунок: Возраст -->
+      <label style="font-size: 13px; color: #8e8e93;">Возраст: <strong id="age-val" style="color: #fff;">18</strong> лет</label>
+      <input type="range" id="reg-age" min="14" max="60" value="18" step="1" oninput="document.getElementById('age-val').innerText = this.value" style="width: 100%; accent-color: #ff3338; margin-bottom: 12px; cursor: pointer;">
 
-      <label style="font-size: 13px; color: #8e8e93;">Весовая категория (кг)</label>
-      <input type="text" id="reg-weight" placeholder="До 77 кг" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
-
+      <!-- Ползунок: Весовая категория -->
+      <label style="font-size: 13px; color: #8e8e93;">Весовая категория: <strong id="weight-val" style="color: #fff;">70</strong> кг</label>
+      <input type="range" id="reg-weight" min="50" max="120" value="70" step="1" oninput="document.getElementById('weight-val').innerText = this.value" style="width: 100%; accent-color: #ff3338; margin-bottom: 12px; cursor: pointer;">
       <label style="font-size: 13px; color: #8e8e93;">Клуб / Команда</label>
       <input type="text" id="reg-club" placeholder="БК «Ахмат» / Самовыдвиженец" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
 
@@ -409,12 +410,12 @@ function updateProfileUI() {
   const club = localStorage.getItem('rfc_club');
 
   if (fullname) document.getElementById('prof-fullname').innerText = fullname;
-  if (age) document.getElementById('prof-age').innerText = age + ' лет';
+  if (age) document.getElementById('prof-age').innerText = age ;
   if (weight) document.getElementById('prof-weight').innerText = weight;
   if (club) document.getElementById('prof-club').innerText = club;
 }
     // Отправка заявки и переход к оплате
-// Отправка заявки и переход к оплате
+
 // Отправка заявки и переход к оплате
 function submitApplication() {
   const fullname = document.getElementById('reg-fullname').value;
@@ -430,8 +431,8 @@ function submitApplication() {
   // Сохраняем все данные в память браузера
   localStorage.setItem('rfc_applied', 'true');
   localStorage.setItem('rfc_fullname', fullname);
-  localStorage.setItem('rfc_age', age || 'Не указан');
-  localStorage.setItem('rfc_weight', weight || 'Не указана');
+  localStorage.setItem('rfc_age', age ? age + ' лет' : 'Не указан');
+  localStorage.setItem('rfc_weight', weight ? weight + ' кг' : 'Не указана');
   localStorage.setItem('rfc_club', club || 'Самовыдвиженец');
 
   // Обновляем текстовые поля профиля
