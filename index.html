@@ -351,14 +351,21 @@
   </div>
 
   <script>
-    // Инициализация Telegram Mini App
-    document.addEventListener("DOMContentLoaded", () => {
-      if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-      }
-    });
+// Инициализация Telegram Mini App
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+    }
+
+    // Проверяем, подавал ли пользователь заявку ранее
+    const isApplied = localStorage.getItem('rfc_applied');
+    if (isApplied === 'true') {
+      document.getElementById('screen-application').classList.remove('active');
+      document.getElementById('tab-apply').classList.add('active');
+    }
+  });
 
     // Переключение вкладок (Tabs)
     function switchTab(tabId, el) {
@@ -379,6 +386,7 @@
     // Отправка заявки и переход к оплате
 function submitApplication() {
   const fullname = document.getElementById('reg-fullname').value;
+  localStorage.setItem('rfc_applied', 'true');
   if (!fullname) {
     alert('Пожалуйста, введите ФИО!');
     return;
