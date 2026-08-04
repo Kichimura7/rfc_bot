@@ -187,9 +187,33 @@
       <img src="image_4.png" alt="RFC Logo Shine" class="logo-shine" />
     </div>
   </div>
+  <!-- ЭКРАН 0: Форма регистрации -->
+<div id="screen-application" class="screen active">
+  <div class="card">
+    <h3 style="color: #ff3b30; margin-bottom: 15px; font-weight: 800; text-align: center;">РЕГИСТРАЦИЯ УЧАСТНИКА</h3>
+    
+    <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+      <label style="font-size: 13px; color: #8e8e93;">ФИО полностью</label>
+      <input type="text" id="reg-fullname" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
+
+      <label style="font-size: 13px; color: #8e8e93;">Возраст</label>
+      <input type="number" id="reg-age" placeholder="20" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
+
+      <label style="font-size: 13px; color: #8e8e93;">Весовая категория (кг)</label>
+      <input type="text" id="reg-weight" placeholder="До 77 кг" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
+
+      <label style="font-size: 13px; color: #8e8e93;">Клуб / Команда</label>
+      <input type="text" id="reg-club" placeholder="БК «Ахмат» / Самовыдвиженец" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; outline: none;">
+
+      <button onclick="submitApplication()" class="pay-btn" style="margin-top: 10px;">
+        ОТПРАВИТЬ ЗАЯВКУ
+      </button>
+    </div>
+  </div>
+</div>
 
   <!-- 1. Вкладка: ЗАЯВКА И ОПЛАТА -->
-  <div id="tab-apply" class="screen active">
+  <div id="tab-apply" class="screen">
     <div class="card">
       <div class="card-title">Подача заявки</div>
       <div class="info-row">
@@ -352,6 +376,25 @@
       document.getElementById(tabId).classList.add('active');
       el.classList.add('active');
     }
+    // Отправка заявки и переход к оплате
+function submitApplication() {
+  const fullname = document.getElementById('reg-fullname').value;
+  if (!fullname) {
+    alert('Пожалуйста, введите ФИО!');
+    return;
+  }
+
+  // Виброотклик Telegram
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+  }
+
+  // Скрываем форму регистрации
+  document.getElementById('screen-application').classList.remove('active');
+  
+  // Показываем экран оплаты и реквизитов
+  document.getElementById('tab-apply').classList.add('active');
+}
   </script>
 
 </body>
