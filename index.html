@@ -307,24 +307,37 @@
     </div>
   </div>
 
-  <!-- 5. Вкладка: ПРОФИЛЬ -->
-  <div id="tab-profile" class="screen">
-    <div class="card">
-      <div class="card-title">Профиль бойца</div>
-      <div class="info-row">
-        <span class="info-label">Имя:</span>
-        <span class="info-val">Участник #104</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Весовая:</span>
-        <span class="info-val">77 кг</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Рекорд:</span>
-        <span class="info-val">2-0-0</span>
-      </div>
+<!-- 5. Вкладка: ПРОФИЛЬ -->
+<div id="tab-profile" class="screen">
+  <div class="card">
+    <div class="card-title">ПРОФИЛЬ БОЙЦА</div>
+    
+    <div class="info-row">
+      <span class="info-label">ФИО:</span>
+      <span class="info-val" id="prof-fullname">Не указано</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">Возраст:</span>
+      <span class="info-val" id="prof-age">—</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">Весовая:</span>
+      <span class="info-val" id="prof-weight">—</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">Клуб:</span>
+      <span class="info-val" id="prof-club">—</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">Рекорд:</span>
+      <span class="info-val">0-0-0</span>
     </div>
   </div>
+</div>
 
   <!-- Нижняя панель навигации -->
   <div class="bottom-nav">
@@ -383,14 +396,41 @@
       document.getElementById(tabId).classList.add('active');
       el.classList.add('active');
     }
+    // Функция обновления данных в профиле
+function updateProfileUI() {
+  const fullname = localStorage.getItem('rfc_fullname');
+  const age = localStorage.getItem('rfc_age');
+  const weight = localStorage.getItem('rfc_weight');
+  const club = localStorage.getItem('rfc_club');
+
+  if (fullname) document.getElementById('prof-fullname').innerText = fullname;
+  if (age) document.getElementById('prof-age').innerText = age + ' лет';
+  if (weight) document.getElementById('prof-weight').innerText = weight;
+  if (club) document.getElementById('prof-club').innerText = club;
+}
     // Отправка заявки и переход к оплате
+// Отправка заявки и переход к оплате
+// Отправка заявки и переход к оплате
 function submitApplication() {
   const fullname = document.getElementById('reg-fullname').value;
-  localStorage.setItem('rfc_applied', 'true');
+  const age = document.getElementById('reg-age').value;
+  const weight = document.getElementById('reg-weight').value;
+  const club = document.getElementById('reg-club').value;
+
   if (!fullname) {
     alert('Пожалуйста, введите ФИО!');
     return;
   }
+
+  // Сохраняем все данные в память браузера
+  localStorage.setItem('rfc_applied', 'true');
+  localStorage.setItem('rfc_fullname', fullname);
+  localStorage.setItem('rfc_age', age || 'Не указан');
+  localStorage.setItem('rfc_weight', weight || 'Не указана');
+  localStorage.setItem('rfc_club', club || 'Самовыдвиженец');
+
+  // Обновляем текстовые поля профиля
+  updateProfileUI();
 
   // Виброотклик Telegram
   if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
@@ -403,6 +443,7 @@ function submitApplication() {
   // Показываем экран оплаты и реквизитов
   document.getElementById('tab-apply').classList.add('active');
 }
+
   </script>
 
 </body>
