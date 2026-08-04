@@ -21,7 +21,7 @@
       overflow-x: hidden;
     }
 
-    /* Фоновый неновый блюр */
+    /* Фоновый неоновый блюр */
     .bg-glow {
       position: fixed;
       width: 300px;
@@ -33,40 +33,41 @@
       pointer-events: none;
       z-index: 0;
     }
-    /* Красные ползунки как на макете */
-.custom-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 6px;
-  background: #ff3338;
-  border-radius: 3px;
-  outline: none;
-  margin: 10px 0;
-}
 
-/* Белая круглая пипка ползунка (Chrome, Safari, iOS Telegram WebApp) */
-.custom-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #ffffff;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-}
+    /* Красные ползунки */
+    .custom-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #ff3338;
+      border-radius: 3px;
+      outline: none;
+      margin: 10px 0;
+    }
 
-/* Белая круглая пипка (Firefox) */
-.custom-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #ffffff;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-}
+    /* Белая круглая пипка ползунка */
+    .custom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
+
+    .custom-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
+
     /* Шапка с анимированным логотипом */
     .app-header {
       position: relative;
@@ -140,7 +141,6 @@
       letter-spacing: 0.8px;
     }
 
-    /* Элементы форм и списков */
     .info-row {
       display: flex;
       justify-content: space-between;
@@ -170,7 +170,7 @@
 
     .btn-action:active { transform: scale(0.98); }
 
-    /* Нижнее меню навигации (Tab Bar) */
+    /* Нижнее меню навигации */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -220,52 +220,50 @@
       <img src="image_4.png" alt="RFC Logo Shine" class="logo-shine" />
     </div>
   </div>
+
   <!-- ЭКРАН 0: Форма регистрации -->
-<!-- ЭКРАН 0: Форма регистрации -->
-<div id="screen-application" class="screen active">
-  <div class="card">
-    <h3 style="color: #ff3338; margin-bottom: 20px; font-weight: 800; text-align: center;">ЛИГА RFC 20</h3>
+  <div id="screen-application" class="screen active">
+    <div class="card">
+      <h3 style="color: #ff3338; margin-bottom: 20px; font-weight: 800; text-align: center;">ЛИГА RFC 20</h3>
 
-    <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
-      <!-- ФИО -->
-      <div>
-        <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">ФИО участника</label>
-        <input type="text" id="reg-fullname" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
-      </div>
-
-      <!-- Клуб -->
-      <div>
-        <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">Клуб / Команда</label>
-        <input type="text" id="reg-club" placeholder="Название клуба или «Самостоятельно»" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
-      </div>
-
-<!-- Ползунок Возраст -->
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span style="font-size: 14px; font-weight: bold; color: #fff;">Возраст:</span>
-          <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="age-val">18</span> лет</span>
+      <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+        <!-- ФИО -->
+        <div>
+          <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">ФИО участника</label>
+          <input type="text" id="reg-fullname" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
         </div>
-        <input type="range" id="reg-age" min="6" max="60" value="18" step="1" class="custom-slider" oninput="updateWeightOptions()">
-      </div>
 
-      <!-- Ползунок Весовая категория -->
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span style="font-size: 14px; font-weight: bold; color: #fff;">Весовая категория:</span>
-          <span style="font-size: 14px; font-weight: bold; color: #ff3338;" id="weight-val">70 кг</span>
+        <!-- Клуб -->
+        <div>
+          <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">Клуб / Команда</label>
+          <input type="text" id="reg-club" placeholder="Название клуба или «Самостоятельно»" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
         </div>
-        <input type="range" id="reg-weight" min="0" max="0" value="0" step="1" class="custom-slider" oninput="updateWeightDisplay()">
-      </div>
 
-      <!-- Кнопка -->
-      <button onclick="submitApplication()" style="margin-top: 10px; background: #e5252a; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; text-transform: uppercase;">
-        ОТПРАВИТЬ ЗАЯВКУ
-      </button>
+        <!-- Ползунок Возраст -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 14px; font-weight: bold; color: #fff;">Возраст:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="age-val">18</span> лет</span>
+          </div>
+          <input type="range" id="reg-age" min="6" max="60" value="18" step="1" class="custom-slider" oninput="updateWeightOptions()">
+        </div>
+
+        <!-- Ползунок Весовая категория -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 14px; font-weight: bold; color: #fff;">Весовая категория:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #ff3338;" id="weight-val">57 кг</span>
+          </div>
+          <input type="range" id="reg-weight" min="0" max="7" value="0" step="1" class="custom-slider" oninput="updateWeightDisplay()">
+        </div>
+
+        <!-- Кнопка -->
+        <button onclick="submitApplication()" style="margin-top: 10px; background: #e5252a; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; text-transform: uppercase;">
+          ОТПРАВИТЬ ЗАЯВКУ
+        </button>
+      </div>
     </div>
   </div>
-</div>
-  </div>
-</div>
 
   <!-- 1. Вкладка: ЗАЯВКА И ОПЛАТА -->
   <div id="tab-apply" class="screen">
@@ -329,19 +327,19 @@
       <div class="card-title">Место и Время</div>
       <div class="info-row">
         <span class="info-label">Локация:</span>
-        <span class="info-val">г. Москва, Арена RFC</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Адрес:</span>
-        <span class="info-val">ул. Sports, д. 10, стр. 2</span>
+        <span class="info-val">г. Грозный, Sport Hall Колизей</span>
       </div>
       <div class="info-row">
         <span class="info-label">Взвешивание:</span>
-        <span class="info-val">10:00 - 12:00 (Суббота)</span>
+        <span class="info-val">28 июля (допуск -1кг)</span>
       </div>
       <div class="info-row">
-        <span class="info-label">Начало боёв:</span>
-        <span class="info-val">13:00</span>
+        <span class="info-label">Бои:</span>
+        <span class="info-val">29 июля</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Основной кард:</span>
+        <span class="info-val">30 июля</span>
       </div>
     </div>
   </div>
@@ -357,47 +355,46 @@
     <div class="card">
       <div class="card-title">Правила взвешивания</div>
       <p style="font-size: 13px; color: #ccc; line-height: 1.4;">
-        Допускается перевес не более 300 грамм. Не прошедшие взвешивание участники дисквалифицируются.
+        Допускается перевес (допуск -1 кг по регламенту RFC 20). Не прошедшие взвешивание участники дисквалифицируются.
       </p>
     </div>
   </div>
 
-<!-- 5. Вкладка: ПРОФИЛЬ -->
-<div id="tab-profile" class="screen">
-  <div class="card">
-    <div class="card-title">ПРОФИЛЬ БОЙЦА</div>
-    
-    <div class="info-row">
-      <span class="info-label">ФИО:</span>
-      <span class="info-val" id="prof-fullname">Не указано</span>
-    </div>
+  <!-- 5. Вкладка: ПРОФИЛЬ -->
+  <div id="tab-profile" class="screen">
+    <div class="card">
+      <div class="card-title">ПРОФИЛЬ БОЙЦА</div>
+      
+      <div class="info-row">
+        <span class="info-label">ФИО:</span>
+        <span class="info-val" id="prof-fullname">Не указано</span>
+      </div>
 
-    <div class="info-row">
-      <span class="info-label">Возраст:</span>
-      <span class="info-val" id="prof-age">—</span>
-    </div>
+      <div class="info-row">
+        <span class="info-label">Возраст:</span>
+        <span class="info-val" id="prof-age">—</span>
+      </div>
 
-    <div class="info-row">
-      <span class="info-label">Весовая:</span>
-      <span class="info-val" id="prof-weight">—</span>
-    </div>
+      <div class="info-row">
+        <span class="info-label">Весовая:</span>
+        <span class="info-val" id="prof-weight">—</span>
+      </div>
 
-    <div class="info-row">
-      <span class="info-label">Клуб:</span>
-      <span class="info-val" id="prof-club">—</span>
-    </div>
+      <div class="info-row">
+        <span class="info-label">Клуб:</span>
+        <span class="info-val" id="prof-club">—</span>
+      </div>
 
-    <div class="info-row">
-      <span class="info-label">Рекорд:</span>
-      <span class="info-val">0-0-0</span>
-    </div>
+      <div class="info-row">
+        <span class="info-label">Рекорд:</span>
+        <span class="info-val">0-0-0</span>
+      </div>
 
-    <button onclick="localStorage.clear(); location.reload();" style="margin-top: 15px; background: #ff4444; color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold;">
-      Сбросить данные (для тестов)
-    </button>
+      <button onclick="localStorage.clear(); location.reload();" style="margin-top: 15px; background: #ff4444; color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold;">
+        Сбросить данные (для тестов)
+      </button>
+    </div>
   </div>
-</div>
-  
 
   <!-- Нижняя панель навигации -->
   <div class="bottom-nav">
@@ -424,140 +421,124 @@
   </div>
 
   <script>
-// Инициализация Telegram Mini App
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-    }
+    // Инициализация Telegram Mini App
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+      }
 
-    // Проверяем, подавал ли пользователь заявку ранее
-    const isApplied = localStorage.getItem('rfc_applied');
-    if (isApplied === 'true') {
-      document.getElementById('screen-application').classList.remove('active');
-      document.getElementById('tab-apply').classList.add('active');
-    }
-  });
+      // Проверяем, подавал ли пользователь заявку ранее
+      const isApplied = localStorage.getItem('rfc_applied');
+      if (isApplied === 'true') {
+        document.getElementById('screen-application').classList.remove('active');
+        document.getElementById('tab-apply').classList.add('active');
+      }
+
+      updateProfileUI();
+      updateWeightOptions();
+    });
 
     // Переключение вкладок (Tabs)
     function switchTab(tabId, el) {
-      // Плавная вибрация при переключении
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.selectionChanged();
       }
 
-      // Скрываем все экраны
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      // Снимаем подсветку со всех кнопок навигации
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
-      // Показываем нужный экран и подсвечиваем кнопку
       document.getElementById(tabId).classList.add('active');
       el.classList.add('active');
     }
+
     // Весовые категории по регламенту RFC 20
-const weightRules = [
-  { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
-  { minAge: 8, maxAge: 9, weights: ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"] },
-  { minAge: 10, maxAge: 11, weights: ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг"] },
-  { minAge: 12, maxAge: 13, weights: ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг"] },
-  { minAge: 14, maxAge: 15, weights: ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг"] },
-  { minAge: 16, maxAge: 17, weights: ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"] },
-  { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
-];
+    const weightRules = [
+      { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
+      { minAge: 8, maxAge: 9, weights: ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"] },
+      { minAge: 10, maxAge: 11, weights: ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг"] },
+      { minAge: 12, maxAge: 13, weights: ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг"] },
+      { minAge: 14, maxAge: 15, weights: ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг"] },
+      { minAge: 16, maxAge: 17, weights: ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"] },
+      { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
+    ];
 
-let currentWeights = [];
+    let currentWeights = [];
 
-function updateWeightOptions() {
-  const ageInput = document.getElementById('reg-age');
-  if (!ageInput) return;
-  const age = parseInt(ageInput.value);
+    function updateWeightOptions() {
+      const ageInput = document.getElementById('reg-age');
+      if (!ageInput) return;
+      const age = parseInt(ageInput.value);
 
-  document.getElementById('age-val').innerText = age + (age >= 18 ? ' (18+)' : '');
+      document.getElementById('age-val').innerText = age + (age >= 18 ? ' (18+)' : '');
 
-  const group = weightRules.find(g => age >= g.minAge && age <= g.maxAge) || weightRules[weightRules.length - 1];
-  currentWeights = group.weights;
+      const group = weightRules.find(g => age >= g.minAge && age <= g.maxAge) || weightRules[weightRules.length - 1];
+      currentWeights = group.weights;
 
-  const weightInput = document.getElementById('reg-weight');
-  weightInput.min = 0;
-  weightInput.max = currentWeights.length - 1;
+      const weightInput = document.getElementById('reg-weight');
+      weightInput.min = 0;
+      weightInput.max = currentWeights.length - 1;
 
-  if (parseInt(weightInput.value) >= currentWeights.length) {
-    weightInput.value = Math.floor(currentWeights.length / 2);
-  }
+      if (parseInt(weightInput.value) >= currentWeights.length) {
+        weightInput.value = Math.floor(currentWeights.length / 2);
+      }
 
-  updateWeightDisplay();
-}
+      updateWeightDisplay();
+    }
 
-function updateWeightDisplay() {
-  const weightInput = document.getElementById('reg-weight');
-  if (!weightInput || !currentWeights.length) return;
-  const idx = weightInput.value;
-  const weightStr = currentWeights[idx] || currentWeights[0];
-  document.getElementById('weight-val').innerText = weightStr;
-}
+    function updateWeightDisplay() {
+      const weightInput = document.getElementById('reg-weight');
+      if (!weightInput || !currentWeights.length) return;
+      const idx = weightInput.value;
+      const weightStr = currentWeights[idx] || currentWeights[0];
+      document.getElementById('weight-val').innerText = weightStr;
+    }
 
-document.addEventListener("DOMContentLoaded", updateWeightOptions);
     // Функция обновления данных в профиле
-function updateProfileUI() {
-  const fullname = localStorage.getItem('rfc_fullname');
-  const age = localStorage.getItem('rfc_age');
-  const weight = localStorage.getItem('rfc_weight');
-  const club = localStorage.getItem('rfc_club');
+    function updateProfileUI() {
+      const fullname = localStorage.getItem('rfc_fullname');
+      const age = localStorage.getItem('rfc_age');
+      const weight = localStorage.getItem('rfc_weight');
+      const club = localStorage.getItem('rfc_club');
 
-  if (fullname) document.getElementById('prof-fullname').innerText = fullname;
-  if (age) document.getElementById('prof-age').innerText = age ;
-  if (weight) document.getElementById('prof-weight').innerText = weight;
-  if (club) document.getElementById('prof-club').innerText = club;
-}
+      if (fullname) document.getElementById('prof-fullname').innerText = fullname;
+      if (age) document.getElementById('prof-age').innerText = age;
+      if (weight) document.getElementById('prof-weight').innerText = weight;
+      if (club) document.getElementById('prof-club').innerText = club;
+    }
+
     // Отправка заявки и переход к оплате
+    function submitApplication() {
+      const fullname = document.getElementById('reg-fullname').value;
+      const club = document.getElementById('reg-club').value;
+      const age = document.getElementById('reg-age').value + ' лет';
+      const weight = document.getElementById('weight-val').innerText;
 
-// Отправка заявки и переход к оплате
-const fullname = document.getElementById('reg-fullname').value;
-  const club = document.getElementById('reg-club').value;
-  const age = document.getElementById('reg-age').value + ' лет';
-  const weight = document.getElementById('weight-val').innerText;
+      if (!fullname) {
+        alert('Пожалуйста, введите ФИО!');
+        return;
+      }
 
-  if (!fullname) {
-    alert('Пожалуйста, введите ФИО');
-    return;
-  }
+      // Сохраняем данные
+      localStorage.setItem('rfc_applied', 'true');
+      localStorage.setItem('rfc_fullname', fullname);
+      localStorage.setItem('rfc_age', age);
+      localStorage.setItem('rfc_weight', weight);
+      localStorage.setItem('rfc_club', club || 'Самостоятельно');
 
-  // Сохраняем все данные в память браузера
-  localStorage.setItem('rfc_applied', 'true');
-  localStorage.setItem('rfc_fullname', fullname);
-  localStorage.setItem('rfc_age', age);
-  localStorage.setItem('rfc_weight', weight);
-  localStorage.setItem('rfc_club', club || 'Самовыдвиженец');
+      // Обновляем UI
+      updateProfileUI();
 
-  if (!fullname) {
-    alert('Пожалуйста, введите ФИО!');
-    return;
-  }
+      // Виброотклик Telegram
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+      }
 
-  // Сохраняем все данные в память браузера
-  localStorage.setItem('rfc_applied', 'true');
-  localStorage.setItem('rfc_fullname', fullname);
-  localStorage.setItem('rfc_age', age ? age + ' лет' : 'Не указан');
-  localStorage.setItem('rfc_weight', weight ? weight + ' кг' : 'Не указана');
-  localStorage.setItem('rfc_club', club || 'Самовыдвиженец');
-
-  // Обновляем текстовые поля профиля
-  updateProfileUI();
-
-  // Виброотклик Telegram
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-  }
-
-  // Скрываем форму регистрации
-  document.getElementById('screen-application').classList.remove('active');
-  
-  // Показываем экран оплаты и реквизитов
-  document.getElementById('tab-apply').classList.add('active');
-
-
+      // Скрываем форму регистрации и открываем вкладку оплаты
+      document.getElementById('screen-application').classList.remove('active');
+      document.getElementById('tab-apply').classList.add('active');
+    }
   </script>
 
 </body>
