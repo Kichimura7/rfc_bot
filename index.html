@@ -461,6 +461,15 @@
         window.Telegram.WebApp.HapticFeedback.selectionChanged();
       }
 
+      // Если нажали на первую вкладку ("Заявка")
+      if (tabId === 'tab-apply') {
+        const isApplied = localStorage.getItem('rfc_applied');
+        // Если заявка ЕЩЕ НЕ подана, перенаправляем на форму регистрации
+        if (isApplied !== 'true') {
+          tabId = 'screen-application';
+        }
+      }
+
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
 
@@ -545,10 +554,13 @@
       updateWeightOptions();
 
       const isApplied = localStorage.getItem('rfc_applied');
+      const firstNav = document.querySelector('.nav-item[data-tab="tab-apply"]');
+      
       if (isApplied === 'true') {
         document.getElementById('screen-application').classList.remove('active');
-        const firstNav = document.querySelector('.nav-item[data-tab="tab-apply"]');
         switchTab('tab-apply', firstNav);
+      } else {
+        switchTab('screen-application', firstNav);
       }
 
       updateProfileUI();
