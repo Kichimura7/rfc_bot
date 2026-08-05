@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <!-- Подключение Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
   <title>RFC App</title>
   <style>
 
@@ -577,33 +581,24 @@
       switchTab('tab-apply', firstNav);
     }
 
-    // --- ПРОВЕРКА ДОСТУПА В АДМИНКУ С ТЕСТОВЫМ ALERT ---
+    // --- ПРОВЕРКА ДОСТУПА В АДМИНКУ ---
     function checkAdminAccess() {
       let isAdmin = false;
 
-      // Проверка через SDK Telegram
-      if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        const user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
-        
-        // Всплывающее окно для диагностики
-        if (user) {
-          alert("Telegram User ID: " + user.id);
-        } else {
-          alert("Telegram user data is missing (initDataUnsafe is empty)");
-        }
-
-        if (user && user.id) {
-          const userId = String(user.id);
-          if (ADMIN_IDS.includes(userId)) {
-            isAdmin = true;
-          }
+      const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+      const user = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+      
+      if (user) {
+        console.log("Telegram User ID:", user.id);
+        const userId = String(user.id);
+        if (ADMIN_IDS.includes(userId)) {
+          isAdmin = true;
         }
       } else {
-        alert("Telegram WebApp SDK not initialized");
+        console.log("Telegram user data is missing or SDK not ready yet");
       }
 
-      // Проверка параметра в URL для внешнего браузера/ПК
+      // Проверка параметра в URL для внешнего браузера/ПК (?admin=true)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('admin') === 'true') {
         isAdmin = true;
@@ -713,7 +708,7 @@
       switchTab('tab-apply', firstNav);
       updateProfileUI();
 
-      // Вызываем проверку прав строго последней
+      // Вызываем проверку прав
       checkAdminAccess();
     });
   </script>
