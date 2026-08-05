@@ -577,19 +577,30 @@
       switchTab('tab-apply', firstNav);
     }
 
-    // --- ПРОВЕРКА ДОСТУПА В АДМИНКУ ---
+    // --- ПРОВЕРКА ДОСТУПА В АДМИНКУ С ТЕСТОВЫМ ALERT ---
     function checkAdminAccess() {
       let isAdmin = false;
 
       // Проверка через SDK Telegram
       if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-          const userId = String(tg.initDataUnsafe.user.id);
+        const user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+        
+        // Всплывающее окно для диагностики
+        if (user) {
+          alert("Telegram User ID: " + user.id);
+        } else {
+          alert("Telegram user data is missing (initDataUnsafe is empty)");
+        }
+
+        if (user && user.id) {
+          const userId = String(user.id);
           if (ADMIN_IDS.includes(userId)) {
             isAdmin = true;
           }
         }
+      } else {
+        alert("Telegram WebApp SDK not initialized");
       }
 
       // Проверка параметра в URL для внешнего браузера/ПК
