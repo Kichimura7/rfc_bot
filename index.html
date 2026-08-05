@@ -585,26 +585,38 @@
     }
 
     // --- АДМИН-ПАНЕЛЬ ---
-    function checkAdminAccess() {
-      let userId = null;
-      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-        userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-      }
+   function checkAdminAccess() {
+  let userId = null;
 
-      const adminNav = document.getElementById('nav-admin');
-      if (!adminNav) return;
+  // 1. Пытаемся получить ID из Telegram WebApp
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+    userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+  }
 
-      const currentUserIdStr = String(userId);
-      const adminIdsStr = ADMIN_IDS.map(id => String(id));
+  // 2. РЕЗЕРВНЫЙ ВАРИАНТ ДЛЯ ТЕСТОВ В БРАУЗЕРЕ (если открыто не из Telegram):
+  // Если userId не найден, проверяем URL-параметр ?admin_id=8613061969
+  if (!userId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    userId = urlParams.get('admin_id');
+  }
 
-      if (userId && adminIdsStr.includes(currentUserIdStr)) {
-        adminNav.classList.remove('hidden');
-        adminNav.style.display = 'flex';
-      } else {
-        adminNav.classList.add('hidden');
-        adminNav.style.display = 'none';
-      }
-    }
+  const adminNav = document.getElementById('nav-admin');
+  if (!adminNav) return;
+
+  const currentUserIdStr = String(userId);
+  const adminIdsStr = ADMIN_IDS.map(id => String(id));
+
+  console.log("Current User ID:", userId); // Для отладки в консоли
+  console.log("Admin IDs:", ADMIN_IDS);
+
+  if (userId && adminIdsStr.includes(currentUserIdStr)) {
+    adminNav.classList.remove('hidden');
+    adminNav.style.setProperty('display', 'flex', 'important'); // Принудительный показ
+  } else {
+    adminNav.classList.add('hidden');
+    adminNav.style.setProperty('display', 'none', 'important');
+  }
+}
 
     function loadAdminApplications() {
       const container = document.getElementById('admin-apps-list');
