@@ -583,7 +583,7 @@
     function checkAdminAccess() {
       let isAdmin = false;
 
-      // 1. Проверяем Telegram WebApp
+      // 1. Проверка Telegram ID (работает всегда, когда Telegram передает профиль)
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
         const user = window.Telegram.WebApp.initDataUnsafe.user;
         if (user && user.id && ADMIN_IDS.map(String).includes(String(user.id))) {
@@ -591,12 +591,13 @@
         }
       }
 
-      // 2. Резервная проверка для ПК (всегда показывать админку на десктопе или при ?admin=true)
+      // 2. Явный вход по секретному параметру в ссылке (для ПК/браузера): ?admin=true
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('admin') === 'true' || !window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) {
-        isAdmin = true; 
+      if (urlParams.get('admin') === 'true') {
+        isAdmin = true;
       }
 
+      // 3. Управление отображением кнопки
       const adminNav = document.getElementById('nav-admin');
       if (adminNav) {
         if (isAdmin) {
