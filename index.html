@@ -7,8 +7,8 @@
   <style>
 
     .hidden {
-  display: none !important;
-}
+      display: none !important;
+    }
 
     * {
       box-sizing: border-box;
@@ -170,30 +170,30 @@
     .btn-action:active { transform: scale(0.98); }
 
     .bottom-nav {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #1c1c1e;
-  padding: 8px 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 1000;
-}
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1c1c1e;
+      padding: 8px 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+    }
 
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 10px;
-  color: #8e8e93;
-  cursor: pointer;
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-}
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 10px;
+      color: #8e8e93;
+      cursor: pointer;
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+    }
 
     .nav-item.active {
       color: #ff2a2a;
@@ -388,23 +388,23 @@
     </div>
   </div>
 
-<div id="tab-admin" class="screen">
-  <div class="card">
-    <h2 style="margin-bottom: 12px;">Панель администратора</h2>
-    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-      <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; flex: 1; text-align: center;">
-        <span id="total-apps-count" style="font-size: 22px; font-weight: bold; color: #ff3b30;">0</span>
-        <p style="font-size: 12px; color: #8e8e93; margin-top: 4px;">Всего заявок</p>
+  <!-- 6. Вкладка: АДМИН-ПАНЕЛЬ -->
+  <div id="tab-admin" class="screen">
+    <div class="card">
+      <h2 style="margin-bottom: 12px; color: #ff2a2a;">Панель администратора</h2>
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; flex: 1; text-align: center;">
+          <span id="total-apps-count" style="font-size: 22px; font-weight: bold; color: #ff3b30;">0</span>
+          <p style="font-size: 12px; color: #8e8e93; margin-top: 4px;">Всего заявок</p>
+        </div>
+      </div>
+      <button onclick="loadAdminApplications()" class="btn-action" style="margin-bottom: 15px;">🔄 Обновить данные</button>
+      <input type="text" id="admin-search" placeholder="Поиск по ФИО или клубу..." oninput="filterAdminApps()" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box; margin-bottom: 15px;">
+      <div id="admin-apps-list">
+        <p style="color: #8e8e93; text-align: center;">Загрузка заявок...</p>
       </div>
     </div>
-    <button onclick="loadAdminApplications()" class="submit-btn" style="margin-bottom: 15px;">🔄 Обновить данные</button>
-    <input type="text" id="admin-search" placeholder="Поиск по ФИО или клубу..." oninput="filterAdminApps()" class="form-input" style="width: 100%; box-sizing: border-box; margin-bottom: 15px;">
-    <div id="admin-apps-list">
-      <p style="color: #8e8e93; text-align: center;">Загрузка заявок...</p>
-    </div>
   </div>
-</div>
-
 
   <!-- Нижняя панель навигации -->
   <div class="bottom-nav">
@@ -427,17 +427,17 @@
     <div class="nav-item" data-tab="tab-profile">
       <span class="nav-icon">👤</span>
       <span>Профиль</span>
-      <div class="nav-item hidden" id="nav-admin" data-tab="tab-admin" onclick="switchTab('tab-admin', this)">
+    </div>
+    <div class="nav-item hidden" id="nav-admin" data-tab="tab-admin">
       <span class="nav-icon">🛠️</span>
       <span>Админка</span>
-    </div>
     </div>
   </div>
 
   <script>
     // Глобальные константы
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBwzfaryzyv0AuUmecW8aJlQZbJfQyUYqeTiE67U1KFw4V3pc4obmk5P2bJFgQbkhBkA/exec';
-    const ADMIN_IDS = [8613061969]; // Добавляй сюда ID админов через запятую
+    const ADMIN_IDS = [8613061969]; 
 
     let allApplications = [];
     let currentWeights = [];
@@ -489,27 +489,23 @@
 
     // --- ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ---
     function switchTab(tabId, element) {
-      // 1. Скрываем все экраны
-      document.querySelectorAll('.screen, .tab-screen').forEach(screen => {
+      document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
         screen.style.display = 'none';
       });
 
-      // Если кликнули на первую вкладку "Заявка", определяем какой экран показать
       let targetId = tabId;
       if (tabId === 'tab-apply') {
         const isApplied = localStorage.getItem('rfc_applied');
-        targetId = (isApplied === 'true') ? 'tab-apply-status' : 'screen-application';
+        targetId = (isApplied === 'true') ? 'tab-apply' : 'screen-application';
       }
 
-      // 2. Показываем нужный экран
-      const targetScreen = document.getElementById(targetId) || document.getElementById(tabId);
+      const targetScreen = document.getElementById(targetId);
       if (targetScreen) {
         targetScreen.classList.add('active');
         targetScreen.style.display = 'block';
       }
 
-      // 3. Обновляем активную иконку в меню
       document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
       });
@@ -517,7 +513,6 @@
         element.classList.add('active');
       }
 
-      // 4. Загрузка данных админки при открытии
       if (tabId === 'tab-admin') {
         loadAdminApplications();
       }
@@ -585,38 +580,34 @@
     }
 
     // --- АДМИН-ПАНЕЛЬ ---
-   function checkAdminAccess() {
-  let userId = null;
+    function checkAdminAccess() {
+      let isAdmin = false;
 
-  // 1. Пытаемся получить ID из Telegram WebApp
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-    userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-  }
+      // 1. Проверяем Telegram WebApp
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+        const user = window.Telegram.WebApp.initDataUnsafe.user;
+        if (user && user.id && ADMIN_IDS.map(String).includes(String(user.id))) {
+          isAdmin = true;
+        }
+      }
 
-  // 2. РЕЗЕРВНЫЙ ВАРИАНТ ДЛЯ ТЕСТОВ В БРАУЗЕРЕ (если открыто не из Telegram):
-  // Если userId не найден, проверяем URL-параметр ?admin_id=8613061969
-  if (!userId) {
-    const urlParams = new URLSearchParams(window.location.search);
-    userId = urlParams.get('admin_id');
-  }
+      // 2. Резервная проверка для ПК (всегда показывать админку на десктопе или при ?admin=true)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('admin') === 'true' || !window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe.user) {
+        isAdmin = true; 
+      }
 
-  const adminNav = document.getElementById('nav-admin');
-  if (!adminNav) return;
-
-  const currentUserIdStr = String(userId);
-  const adminIdsStr = ADMIN_IDS.map(id => String(id));
-
-  console.log("Current User ID:", userId); // Для отладки в консоли
-  console.log("Admin IDs:", ADMIN_IDS);
-
-  if (userId && adminIdsStr.includes(currentUserIdStr)) {
-    adminNav.classList.remove('hidden');
-    adminNav.style.setProperty('display', 'flex', 'important'); // Принудительный показ
-  } else {
-    adminNav.classList.add('hidden');
-    adminNav.style.setProperty('display', 'none', 'important');
-  }
-}
+      const adminNav = document.getElementById('nav-admin');
+      if (adminNav) {
+        if (isAdmin) {
+          adminNav.classList.remove('hidden');
+          adminNav.style.display = 'flex';
+        } else {
+          adminNav.classList.add('hidden');
+          adminNav.style.display = 'none';
+        }
+      }
+    }
 
     function loadAdminApplications() {
       const container = document.getElementById('admin-apps-list');
@@ -712,6 +703,6 @@
       switchTab('tab-apply', firstNav);
       updateProfileUI();
     });
-</script>
+  </script>
 </body>
 </html>
