@@ -385,6 +385,25 @@
     </div>
   </div>
 
+
+  <div id="tab-admin" class="tab-screen">
+  <div class="profile-card">
+    <h2 style="margin-bottom: 12px;">Панель администратора</h2>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; flex: 1; text-align: center;">
+        <span id="total-apps-count" style="font-size: 22px; font-weight: bold; color: #ff3b30;">0</span>
+        <p style="font-size: 12px; color: #8e8e93; margin-top: 4px;">Всего заявок</p>
+      </div>
+    </div>
+    <button onclick="loadAdminApplications()" class="submit-btn" style="margin-bottom: 15px;">🔄 Обновить данные</button>
+    <input type="text" id="admin-search" placeholder="Поиск по ФИО или клубу..." oninput="filterAdminApps()" class="form-input" style="width: 100%; box-sizing: border-box; margin-bottom: 15px;">
+    <div id="admin-apps-list">
+      <p style="color: #8e8e93; text-align: center;">Загрузка заявок...</p>
+    </div>
+  </div>
+</div>
+
+
   <!-- Нижняя панель навигации -->
   <div class="bottom-nav">
     <div class="nav-item active" data-tab="tab-apply">
@@ -406,6 +425,10 @@
     <div class="nav-item" data-tab="tab-profile">
       <span class="nav-icon">👤</span>
       <span>Профиль</span>
+      <div class="nav-item hidden" id="nav-admin" data-tab="tab-admin" onclick="switchTab('tab-admin', this)">
+      <span class="nav-icon">🛠️</span>
+      <span>Админка</span>
+    </div>
     </div>
   </div>
 
@@ -593,6 +616,79 @@
 
       updateProfileUI();
     });
+    // Список Telegram ID администраторов
+const ADMIN_IDS = [123456789]; // <-- ЗАМЕНИТЕ 123456789 НА СВОЙ TELEGRAM ID
+
+let allApplications = [];
+
+function checkAdminAccess() {
+  let userId = null;
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+    userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+  }
+
+  if (userId && ADMIN_IDS.includes(userId)) {
+    const adminNav = document.getElementById('nav-admin');
+    if (adminNav) {
+      adminNav.classList.remove('hidden');
+    }
+  }
+}
+
+function loadAdminApplications() {
+  const container = document.getElementById('admin-apps-list');
+  container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Загрузка данных...</p>';
+
+  fetch(SCRIPT_URL)
+    .then(res => res.json())
+    .then(response => {
+      if (response.result === 'success') {
+        allApplications = response.data;
+        document.getElementById('total-apps-count').textContent = allApplications.length;
+        renderAdminApps(allApplications);
+      } else {
+        container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
+    });
+}
+
+function renderAdminApps(apps) {
+  const container = document.getElementById('admin-apps-list');
+  if (!apps || apps.length === 0) {
+    container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Заявок пока нет</p>';
+    return;
+  }
+
+  container.innerHTML = apps.map(app => `
+    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <strong>${app.fullname}</strong>
+        <span style="background: #ff3b30; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">${app.weight}</span>
+      </div>
+      <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Клуб:</strong> ${app.club}</p>
+      <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Возраст:</strong> ${app.age}</p>
+      <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Контакты:</strong> ${app.telegram_id}</p>
+      <p style="font-size: 11px; color: #8e8e93; margin-top: 6px;">${app.timestamp}</p>
+    </div>
+  `).join('');
+}
+
+function filterAdminApps() {
+  const query = document.getElementById('admin-search').value.toLowerCase();
+  const filtered = allApplications.filter(app => 
+    (app.fullname && app.fullname.toLowerCase().includes(query)) ||
+    (app.club && app.club.toLowerCase().includes(query))
+  );
+  renderAdminApps(filtered);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkAdminAccess();
+});
   </script>
 </body>
 </html>
