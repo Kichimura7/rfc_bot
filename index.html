@@ -435,6 +435,13 @@
   </div>
 
   <script>
+    // Глобальные константы
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBwzfaryzyv0AuUmecW8aJlQZbJfQyUYqeTiE67U1KFw4V3pc4obmk5P2bJFgQbkhBkA/exec';
+    const ADMIN_IDS = [8613061969]; // Добавляй сюда ID админов через запятую
+
+    let allApplications = [];
+    let currentWeights = [];
+
     const weightRules = [
       { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
       { minAge: 8, maxAge: 9, weights: ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"] },
@@ -445,8 +452,7 @@
       { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
     ];
 
-    let currentWeights = [];
-
+    // --- ЛОГИКА ВЕСОВЫХ КАТЕГОРИЙ ---
     function updateWeightDisplay() {
       const weightInput = document.getElementById('reg-weight');
       const weightLabel = document.getElementById('weight-val');
@@ -481,44 +487,53 @@
       updateWeightDisplay();
     }
 
-   function switchTab(tabId, element) {
-  // 1. Скрываем все экраны
-  document.querySelectorAll('.screen').forEach(screen => {
-    screen.classList.remove('active');
-    screen.style.display = 'none';
-  });
+    // --- ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ---
+    function switchTab(tabId, element) {
+      // 1. Скрываем все экраны
+      document.querySelectorAll('.screen, .tab-screen').forEach(screen => {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
+      });
 
-  // 2. Показываем нужный
-  const targetScreen = document.getElementById(tabId);
-  if (targetScreen) {
-    targetScreen.classList.add('active');
-    targetScreen.style.display = 'block';
-  }
+      // Если кликнули на первую вкладку "Заявка", определяем какой экран показать
+      let targetId = tabId;
+      if (tabId === 'tab-apply') {
+        const isApplied = localStorage.getItem('rfc_applied');
+        targetId = (isApplied === 'true') ? 'tab-apply-status' : 'screen-application';
+      }
 
-  // 3. Обновляем активную иконку в меню
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.classList.remove('active');
-  });
-  if (element) {
-    element.classList.add('active');
-  }
+      // 2. Показываем нужный экран
+      const targetScreen = document.getElementById(targetId) || document.getElementById(tabId);
+      if (targetScreen) {
+        targetScreen.classList.add('active');
+        targetScreen.style.display = 'block';
+      }
 
-  // 4. Подгружаем данные из Google Таблицы при открытии админки
-  if (tabId === 'tab-admin') {
-    loadAdminApplications();
-  }
-}
+      // 3. Обновляем активную иконку в меню
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      if (element) {
+        element.classList.add('active');
+      }
 
+      // 4. Загрузка данных админки при открытии
+      if (tabId === 'tab-admin') {
+        loadAdminApplications();
+      }
+    }
+
+    // --- ПРОФИЛЬ И ПОДАЧА ЗАЯВКИ ---
     function updateProfileUI() {
       const fullname = localStorage.getItem('rfc_fullname');
       const age = localStorage.getItem('rfc_age');
       const weight = localStorage.getItem('rfc_weight');
       const club = localStorage.getItem('rfc_club');
 
-      if (fullname) document.getElementById('prof-fullname').textContent = fullname;
-      if (age) document.getElementById('prof-age').textContent = age;
-      if (weight) document.getElementById('prof-weight').textContent = weight;
-      if (club) document.getElementById('prof-club').textContent = club;
+      if (fullname && document.getElementById('prof-fullname')) document.getElementById('prof-fullname').textContent = fullname;
+      if (age && document.getElementById('prof-age')) document.getElementById('prof-age').textContent = age;
+      if (weight && document.getElementById('prof-weight')) document.getElementById('prof-weight').textContent = weight;
+      if (club && document.getElementById('prof-club')) document.getElementById('prof-club').textContent = club;
     }
 
     function submitApplication() {
@@ -532,7 +547,6 @@
         return;
       }
 
-      // Данные Telegram
       let telegramId = 'Не указан';
       if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
         const user = window.Telegram.WebApp.initDataUnsafe.user;
@@ -547,22 +561,16 @@
         telegram_id: telegramId
       };
 
-      // Сохраняем локально
       localStorage.setItem('rfc_applied', 'true');
       localStorage.setItem('rfc_fullname', fullname);
       localStorage.setItem('rfc_age', age);
       localStorage.setItem('rfc_weight', weight);
       localStorage.setItem('rfc_club', club || 'Самостоятельно');
 
-      // Отправка в Google Таблицу
-      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBwzfaryzyv0AuUmecW8aJlQZbJfQyUYqeTiE67U1KFw4V3pc4obmk5P2bJFgQbkhBkA/exec';
-
       fetch(SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       }).catch(err => console.error('Ошибка отправки:', err));
 
@@ -572,11 +580,90 @@
         window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
       }
 
-      document.getElementById('screen-application').classList.remove('active');
       const firstNav = document.querySelector('.nav-item[data-tab="tab-apply"]');
       switchTab('tab-apply', firstNav);
     }
 
+    // --- АДМИН-ПАНЕЛЬ ---
+    function checkAdminAccess() {
+      let userId = null;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+      }
+
+      const adminNav = document.getElementById('nav-admin');
+      if (!adminNav) return;
+
+      const currentUserIdStr = String(userId);
+      const adminIdsStr = ADMIN_IDS.map(id => String(id));
+
+      if (userId && adminIdsStr.includes(currentUserIdStr)) {
+        adminNav.classList.remove('hidden');
+        adminNav.style.display = 'flex';
+      } else {
+        adminNav.classList.add('hidden');
+        adminNav.style.display = 'none';
+      }
+    }
+
+    function loadAdminApplications() {
+      const container = document.getElementById('admin-apps-list');
+      if (!container) return;
+      container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Загрузка данных...</p>';
+
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(response => {
+          if (response.result === 'success') {
+            allApplications = response.data || [];
+            const countEl = document.getElementById('total-apps-count');
+            if (countEl) countEl.textContent = allApplications.length;
+            renderAdminApps(allApplications);
+          } else {
+            container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
+        });
+    }
+
+    function renderAdminApps(apps) {
+      const container = document.getElementById('admin-apps-list');
+      if (!container) return;
+
+      if (!apps || apps.length === 0) {
+        container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Заявок пока нет</p>';
+        return;
+      }
+
+      container.innerHTML = apps.map(app => `
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="color:#fff;">${app.fullname || 'Без имени'}</strong>
+            <span style="background: #ff3b30; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">${app.weight || '-'}</span>
+          </div>
+          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Клуб:</strong> ${app.club || '-'}</p>
+          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Возраст:</strong> ${app.age || '-'}</p>
+          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Контакты:</strong> ${app.telegram_id || '-'}</p>
+          <p style="font-size: 11px; color: #8e8e93; margin-top: 6px;">${app.timestamp || ''}</p>
+        </div>
+      `).join('');
+    }
+
+    function filterAdminApps() {
+      const searchInput = document.getElementById('admin-search');
+      if (!searchInput) return;
+      const query = searchInput.value.toLowerCase();
+      const filtered = allApplications.filter(app => 
+        (app.fullname && app.fullname.toLowerCase().includes(query)) ||
+        (app.club && app.club.toLowerCase().includes(query))
+      );
+      renderAdminApps(filtered);
+    }
+
+    // --- ИНИЦИАЛИЗАЦИЯ ПРИ СТАРТЕ ---
     document.addEventListener('DOMContentLoaded', () => {
       if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
@@ -607,92 +694,12 @@
       });
 
       updateWeightOptions();
+      checkAdminAccess();
 
-      const isApplied = localStorage.getItem('rfc_applied');
       const firstNav = document.querySelector('.nav-item[data-tab="tab-apply"]');
-      
-      if (isApplied === 'true') {
-        document.getElementById('screen-application').classList.remove('active');
-        switchTab('tab-apply', firstNav);
-      } else {
-        switchTab('screen-application', firstNav);
-      }
-
+      switchTab('tab-apply', firstNav);
       updateProfileUI();
     });
-    // Список Telegram ID администраторов
-const ADMIN_IDS = [8613061969]; // <-- ЗАМЕНИТЕ 123456789 НА СВОЙ TELEGRAM ID
-
-let allApplications = [];
-
-function checkAdminAccess() {
-  let userId = null;
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-    userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-  }
-
-  if (userId && ADMIN_IDS.includes(userId)) {
-    const adminNav = document.getElementById('nav-admin');
-    if (adminNav) {
-      adminNav.classList.remove('hidden');
-    }
-  }
-}
-
-function loadAdminApplications() {
-  const container = document.getElementById('admin-apps-list');
-  container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Загрузка данных...</p>';
-
-  fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(response => {
-      if (response.result === 'success') {
-        allApplications = response.data;
-        document.getElementById('total-apps-count').textContent = allApplications.length;
-        renderAdminApps(allApplications);
-      } else {
-        container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
-    });
-}
-
-function renderAdminApps(apps) {
-  const container = document.getElementById('admin-apps-list');
-  if (!apps || apps.length === 0) {
-    container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Заявок пока нет</p>';
-    return;
-  }
-
-  container.innerHTML = apps.map(app => `
-    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: left;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <strong>${app.fullname}</strong>
-        <span style="background: #ff3b30; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">${app.weight}</span>
-      </div>
-      <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Клуб:</strong> ${app.club}</p>
-      <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Возраст:</strong> ${app.age}</p>
-      <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Контакты:</strong> ${app.telegram_id}</p>
-      <p style="font-size: 11px; color: #8e8e93; margin-top: 6px;">${app.timestamp}</p>
-    </div>
-  `).join('');
-}
-
-function filterAdminApps() {
-  const query = document.getElementById('admin-search').value.toLowerCase();
-  const filtered = allApplications.filter(app => 
-    (app.fullname && app.fullname.toLowerCase().includes(query)) ||
-    (app.club && app.club.toLowerCase().includes(query))
-  );
-  renderAdminApps(filtered);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  checkAdminAccess();
-});
-  </script>
+</script>
 </body>
 </html>
