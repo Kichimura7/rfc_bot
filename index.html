@@ -435,9 +435,10 @@
   </div>
 
   <script>
-    // Глобальные константы
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyBwzfaryzyv0AuUmecW8aJlQZbJfQyUYqeTiE67U1KFw4V3pc4obmk5P2bJFgQbkhBkA/exec';
-    const ADMIN_IDS = [8613061969]; 
+    
+    // Список разрешенных Telegram ID (в строковом формате)
+    const ADMIN_IDS = ["8613061969"]; 
 
     let allApplications = [];
     let currentWeights = [];
@@ -452,7 +453,6 @@
       { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
     ];
 
-    // --- ЛОГИКА ВЕСОВЫХ КАТЕГОРИЙ ---
     function updateWeightDisplay() {
       const weightInput = document.getElementById('reg-weight');
       const weightLabel = document.getElementById('weight-val');
@@ -487,7 +487,6 @@
       updateWeightDisplay();
     }
 
-    // --- ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ---
     function switchTab(tabId, element) {
       document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
@@ -518,7 +517,6 @@
       }
     }
 
-    // --- ПРОФИЛЬ И ПОДАЧА ЗАЯВКИ ---
     function updateProfileUI() {
       const fullname = localStorage.getItem('rfc_fullname');
       const age = localStorage.getItem('rfc_age');
@@ -579,25 +577,27 @@
       switchTab('tab-apply', firstNav);
     }
 
-    // --- АДМИН-ПАНЕЛЬ ---
+    // --- ПРОВЕРКА ДОСТУПА В АДМИНКУ ---
     function checkAdminAccess() {
       let isAdmin = false;
 
-      // 1. Проверка Telegram ID (работает всегда, когда Telegram передает профиль)
-      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
-        const user = window.Telegram.WebApp.initDataUnsafe.user;
-        if (user && user.id && ADMIN_IDS.map(String).includes(String(user.id))) {
-          isAdmin = true;
+      // Проверка через SDK Telegram
+      if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+          const userId = String(tg.initDataUnsafe.user.id);
+          if (ADMIN_IDS.includes(userId)) {
+            isAdmin = true;
+          }
         }
       }
 
-      // 2. Явный вход по секретному параметру в ссылке (для ПК/браузера): ?admin=true
+      // Проверка параметра в URL для внешнего браузера/ПК
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('admin') === 'true') {
         isAdmin = true;
       }
 
-      // 3. Управление отображением кнопки
       const adminNav = document.getElementById('nav-admin');
       if (adminNav) {
         if (isAdmin) {
@@ -667,7 +667,6 @@
       renderAdminApps(filtered);
     }
 
-    // --- ИНИЦИАЛИЗАЦИЯ ПРИ СТАРТЕ ---
     document.addEventListener('DOMContentLoaded', () => {
       if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
@@ -698,11 +697,13 @@
       });
 
       updateWeightOptions();
-      checkAdminAccess();
 
       const firstNav = document.querySelector('.nav-item[data-tab="tab-apply"]');
       switchTab('tab-apply', firstNav);
       updateProfileUI();
+
+      // Вызываем проверку прав строго последней
+      checkAdminAccess();
     });
   </script>
 </body>
