@@ -553,7 +553,7 @@
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyY5YQ82dZL7uCmEZW3icrbC_c_LF0KqSMfd67vEcZiaiGF6SAZKCI38KVG5Rcl6abypA/exec';
     
-    // Список разрешенных Telegram ID (в строковом формате)
+    // Список разрешенных Telegram ID
     const ADMIN_IDS = ["8613061969"]; 
 
     let allApplications = [];
@@ -693,7 +693,6 @@
       switchTab('tab-apply', firstNav);
     }
 
-    // --- ПРОВЕРКА ДОСТУПА В АДМИНКУ ---
     function checkAdminAccess() {
       let isAdmin = false;
 
@@ -701,16 +700,12 @@
       const user = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
       
       if (user) {
-        console.log("Telegram User ID:", user.id);
         const userId = String(user.id);
         if (ADMIN_IDS.includes(userId)) {
           isAdmin = true;
         }
-      } else {
-        console.log("Telegram user data is missing or SDK not ready yet");
       }
 
-      // Проверка параметра в URL для внешнего браузера/ПК (?admin=true)
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('admin') === 'true') {
         isAdmin = true;
@@ -729,48 +724,41 @@
     }
 
     function loadAdminApplications() {
-  const container = document.getElementById('admin-apps-list');
-  const icon = document.getElementById('refresh-icon');
-  const btn = document.getElementById('btn-refresh-admin');
-  if (!container) return;
+      const container = document.getElementById('admin-apps-list');
+      const icon = document.getElementById('refresh-icon');
+      const btn = document.getElementById('btn-refresh-admin');
+      if (!container) return;
 
-  // Включаем анимацию и приглушаем кнопку
-  if (icon) icon.classList.add('spinning');
-  if (btn) btn.style.opacity = '0.7';
+      if (icon) icon.classList.add('spinning');
+      if (btn) btn.style.opacity = '0.7';
 
-  // Виброотклик Telegram (если открыто в Telegram)
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-  }
-
-  container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Загрузка данных...</p>';
-
-  fetch(SCRIPT_URL)
-    .then(res => res.json())
-    .then(response => {
-      if (response.result === 'success') {
-        allApplications = response.data || [];
-        const countEl = document.getElementById('total-apps-count');
-        if (countEl) countEl.textContent = allApplications.length;
-        renderAdminApps(allApplications);
-      } else {
-        container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
       }
-    })
-    .catch(err => {
-      console.error(err);
-      container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
-    })
-    .finally(() => {
-      // Выключаем анимацию после завершения запроса
-      if (icon) icon.classList.remove('spinning');
-      if (btn) btn.style.opacity = '1';
-    });
-}    
 
+      container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Загрузка данных...</p>';
 
-
-
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(response => {
+          if (response.result === 'success') {
+            allApplications = response.data || [];
+            const countEl = document.getElementById('total-apps-count');
+            if (countEl) countEl.textContent = allApplications.length;
+            renderAdminApps(allApplications);
+          } else {
+            container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
+        })
+        .finally(() => {
+          if (icon) icon.classList.remove('spinning');
+          if (btn) btn.style.opacity = '1';
+        });
+    }
 
     function renderAdminApps(apps) {
       const container = document.getElementById('admin-apps-list');
@@ -809,15 +797,13 @@
         .then(response => {
           if (response.result === 'success') {
             alert('Заявка успешно удалена!');
-            loadAdminApplications(); // Обновляем список в админке
+            loadAdminApplications();
           } else {
             alert('Ошибка при удалении');
           }
         })
         .catch(err => {
           console.error(err);
-          // Так как Google Apps Script может возвращать CORS-ошибки при GET-запросах с ответом, 
-          // сделаем небольшую паузу и перезагрузим список, так как само удаление на сервере всё равно происходит.
           setTimeout(() => {
             loadAdminApplications();
           }, 1000);
@@ -835,6 +821,62 @@
       renderAdminApps(filtered);
     }
 
+    // --- ФУНКЦИИ СЕТКИ БОЁВ ---
+    function loadBracketMatches() {
+      const container = document.getElementById('bracket-matches-list');
+      if (!container) return;
+
+      const savedMatches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+
+      if (savedMatches.length === 0) {
+        container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Пар пока нет. Админ формирует сетку.</p>';
+        return;
+      }
+
+      container.innerHTML = savedMatches.map((m, index) => `
+        <div class="match-card">
+          <div class="match-header">
+            <span>Бой №${index + 1}</span>
+            <span style="color: #ff2a2a; font-weight: bold;">${m.category || 'Весовая не указана'}</span>
+          </div>
+          <div class="match-fighters">
+            <div class="fighter-box fighter-red">
+              <div class="fighter-name">${m.f1}</div>
+              <div class="fighter-club">Красный угол</div>
+            </div>
+            <div class="vs-badge">VS</div>
+            <div class="fighter-box fighter-blue">
+              <div class="fighter-name">${m.f2}</div>
+              <div class="fighter-club">Синий угол</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addMatchPair() {
+      const f1 = document.getElementById('pair-fighter1').value.trim();
+      const f2 = document.getElementById('pair-fighter2').value.trim();
+      const cat = document.getElementById('pair-category').value.trim();
+
+      if (!f1 || !f2) {
+        alert('Заполните ФИО обоих бойцов!');
+        return;
+      }
+
+      const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+      matches.push({ f1, f2, category: cat });
+      localStorage.setItem('rfc_matches', JSON.stringify(matches));
+
+      document.getElementById('pair-fighter1').value = '';
+      document.getElementById('pair-fighter2').value = '';
+      document.getElementById('pair-category').value = '';
+
+      alert('Пара успешно добавлена в сетку!');
+      loadBracketMatches();
+    }
+
+    // --- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ---
     document.addEventListener('DOMContentLoaded', () => {
       if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
@@ -850,12 +892,21 @@
       if (ageInput) ageInput.addEventListener('input', updateWeightOptions);
       if (weightInput) weightInput.addEventListener('input', updateWeightDisplay);
       if (submitBtn) submitBtn.addEventListener('click', submitApplication);
+      
       if (resetBtn) {
         resetBtn.addEventListener('click', () => {
+          // Сохраняем сетку боёв перед полной очисткой
+          const savedMatches = localStorage.getItem('rfc_matches');
+          
           localStorage.clear();
+          
+          // Возвращаем сетку боёв обратно
+          if (savedMatches) {
+            localStorage.setItem('rfc_matches', savedMatches);
+          }
+          
           location.reload();
         });
-        loadBracketMatches();
       }
 
       document.querySelectorAll('.nav-item').forEach(item => {
@@ -870,67 +921,11 @@
       const firstNav = document.querySelector('.nav-item[data-tab="tab-apply"]');
       switchTab('tab-apply', firstNav);
       updateProfileUI();
-
-      // Вызываем проверку прав
       checkAdminAccess();
+      
+      // Загружаем сетку боёв
+      loadBracketMatches();
     });
-
-
-    function loadBracketMatches() {
-  const container = document.getElementById('bracket-matches-list');
-  if (!container) return;
-
-  const savedMatches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
-
-  if (savedMatches.length === 0) {
-    container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Пар пока нет. Админ формирует сетку.</p>';
-    return;
-  }
-
-  container.innerHTML = savedMatches.map((m, index) => `
-    <div class="match-card">
-      <div class="match-header">
-        <span>Бой №${index + 1}</span>
-        <span style="color: #ff2a2a; font-weight: bold;">${m.category || 'Весовая не указана'}</span>
-      </div>
-      <div class="match-fighters">
-        <div class="fighter-box fighter-red">
-          <div class="fighter-name">${m.f1}</div>
-          <div class="fighter-club">Красный угол</div>
-        </div>
-        <div class="vs-badge">VS</div>
-        <div class="fighter-box fighter-blue">
-          <div class="fighter-name">${m.f2}</div>
-          <div class="fighter-club">Синий угол</div>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function addMatchPair() {
-  const f1 = document.getElementById('pair-fighter1').value.trim();
-  const f2 = document.getElementById('pair-fighter2').value.trim();
-  const cat = document.getElementById('pair-category').value.trim();
-
-  if (!f1 || !f2) {
-    alert('Заполните ФИО обоих бойцов!');
-    return;
-  }
-
-  const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
-  matches.push({ f1, f2, category: cat });
-  localStorage.setItem('rfc_matches', JSON.stringify(matches));
-
-  document.getElementById('pair-fighter1').value = '';
-  document.getElementById('pair-fighter2').value = '';
-  document.getElementById('pair-category').value = '';
-
-  alert('Пара успешно добавлена в сетку!');
-  loadBracketMatches();
-}
-
-
   </script>
 </body>
-</html>
+</html> 
