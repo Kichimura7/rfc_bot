@@ -550,6 +550,7 @@
     </div>
   </div>
 
+
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyY5YQ82dZL7uCmEZW3icrbC_c_LF0KqSMfd67vEcZiaiGF6SAZKCI38KVG5Rcl6abypA/exec';
     
@@ -568,6 +569,18 @@
       { minAge: 16, maxAge: 17, weights: ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"] },
       { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
     ];
+
+    function checkIsAdmin() {
+      const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+      const user = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
+      
+      if (user && ADMIN_IDS.includes(String(user.id))) {
+        return true;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('admin') === 'true';
+    }
 
     function updateWeightDisplay() {
       const weightInput = document.getElementById('reg-weight');
@@ -694,23 +707,7 @@
     }
 
     function checkAdminAccess() {
-      let isAdmin = false;
-
-      const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-      const user = tg && tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
-      
-      if (user) {
-        const userId = String(user.id);
-        if (ADMIN_IDS.includes(userId)) {
-          isAdmin = true;
-        }
-      }
-
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('admin') === 'true') {
-        isAdmin = true;
-      }
-
+      const isAdmin = checkIsAdmin();
       const adminNav = document.getElementById('nav-admin');
       if (adminNav) {
         if (isAdmin) {
@@ -833,6 +830,8 @@
         return;
       }
 
+      const isAdmin = checkIsAdmin();
+
       container.innerHTML = savedMatches.map((m, index) => `
         <div class="match-card">
           <div class="match-header">
@@ -850,6 +849,11 @@
               <div class="fighter-club">Синий угол</div>
             </div>
           </div>
+          ${isAdmin ? `
+            <button onclick="deleteMatchPair(${index})" style="margin-top: 10px; background: rgba(255, 59, 48, 0.15); color: #ff3b30; border: 1px solid #ff3b30; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;">
+              🗑️ Удалить бой
+            </button>
+          ` : ''}
         </div>
       `).join('');
     }
@@ -876,6 +880,20 @@
       loadBracketMatches();
     }
 
+    function deleteMatchPair(index) {
+      if (!confirm("Вы действительно хотите удалить этот бой из сетки?")) return;
+
+      const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+      matches.splice(index, 1);
+      localStorage.setItem('rfc_matches', JSON.stringify(matches));
+
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+      }
+
+      loadBracketMatches();
+    }
+
     // --- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ---
     document.addEventListener('DOMContentLoaded', () => {
       if (window.Telegram && window.Telegram.WebApp) {
@@ -895,16 +913,11 @@
       
       if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-          // Сохраняем сетку боёв перед полной очисткой
           const savedMatches = localStorage.getItem('rfc_matches');
-          
           localStorage.clear();
-          
-          // Возвращаем сетку боёв обратно
           if (savedMatches) {
             localStorage.setItem('rfc_matches', savedMatches);
           }
-          
           location.reload();
         });
       }
@@ -922,10 +935,10 @@
       switchTab('tab-apply', firstNav);
       updateProfileUI();
       checkAdminAccess();
-      
-      // Загружаем сетку боёв
       loadBracketMatches();
     });
   </script>
+
+  
 </body>
-</html> 
+</html>
