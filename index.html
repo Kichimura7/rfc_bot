@@ -217,6 +217,71 @@
   animation: spin 0.8s linear infinite;
   display: inline-block;
 }
+
+
+/* Стили турнирной сетки */
+    .match-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #8e8e93;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 6px;
+    }
+
+    .match-fighters {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .fighter-box {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .fighter-red {
+      background: rgba(255, 42, 42, 0.15);
+      border: 1px solid rgba(255, 42, 42, 0.4);
+    }
+
+    .fighter-blue {
+      background: rgba(0, 122, 255, 0.15);
+      border: 1px solid rgba(0, 122, 255, 0.4);
+    }
+
+    .fighter-name {
+      font-weight: bold;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .fighter-club {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .vs-badge {
+      font-weight: 900;
+      font-size: 14px;
+      color: #ff2a2a;
+      font-style: italic;
+    }
+
+
   </style>
 </head>
 <body>
@@ -402,6 +467,20 @@
     </div>
   </div>
 
+  <!-- Вкладка: ТУРНИРНАЯ СЕТКА -->
+  <div id="tab-bracket" class="screen">
+    <div class="card">
+      <div class="card-title" style="text-align: center;">🏆 СЕТКА БОЁВ</div>
+      <p style="font-size: 12px; color: #8e8e93; text-align: center; margin-bottom: 15px;">
+        Официальный файткард предстоящего турнира
+      </p>
+
+      <div id="bracket-matches-list">
+        <p style="color: #8e8e93; text-align: center;">Идет формирование сетки боев...</p>
+      </div>
+    </div>
+  </div>
+
   <!-- 6. Вкладка: АДМИН-ПАНЕЛЬ -->
   <div id="tab-admin" class="screen">
     <div class="card">
@@ -411,6 +490,23 @@
           <span id="total-apps-count" style="font-size: 22px; font-weight: bold; color: #ff3b30;">0</span>
           <p style="font-size: 12px; color: #8e8e93; margin-top: 4px;">Всего заявок</p>
         </div>
+      </div>
+      <!-- Форма создания пары -->
+      <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.08);">
+        <h4 style="color: #ff3338; margin-bottom: 10px; font-size: 14px;">➕ Сформировать пару</h4>
+        
+        <label style="font-size: 11px; color: #aaa;">Красный угол (Боец 1):</label>
+        <input type="text" id="pair-fighter1" placeholder="ФИО первого бойца" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Синий угол (Боец 2):</label>
+        <input type="text" id="pair-fighter2" placeholder="ФИО второго бойца" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Весовая категория / Вес:</label>
+        <input type="text" id="pair-category" placeholder="Например: До 77 кг" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 10px; font-size: 13px;">
+
+        <button onclick="addMatchPair()" style="width: 100%; background: #28a745; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;">
+          Сохранить пару в сетку
+        </button>
       </div>
       <button id="btn-refresh-admin" onclick="loadAdminApplications()" class="btn-action" style="margin-bottom: 15px;">
   <span id="refresh-icon" style="display: inline-block;">🔄</span> Обновить данные
@@ -443,6 +539,10 @@
     <div class="nav-item" data-tab="tab-profile">
       <span class="nav-icon">👤</span>
       <span>Профиль</span>
+    </div>
+    <div class="nav-item" data-tab="tab-bracket">
+      <span class="nav-icon">🏆</span>
+      <span>Сетка</span>
     </div>
     <div class="nav-item hidden" id="nav-admin" data-tab="tab-admin">
       <span class="nav-icon">🛠️</span>
@@ -755,6 +855,7 @@
           localStorage.clear();
           location.reload();
         });
+        loadBracketMatches();
       }
 
       document.querySelectorAll('.nav-item').forEach(item => {
@@ -773,6 +874,63 @@
       // Вызываем проверку прав
       checkAdminAccess();
     });
+
+
+    function loadBracketMatches() {
+  const container = document.getElementById('bracket-matches-list');
+  if (!container) return;
+
+  const savedMatches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+
+  if (savedMatches.length === 0) {
+    container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Пар пока нет. Админ формирует сетку.</p>';
+    return;
+  }
+
+  container.innerHTML = savedMatches.map((m, index) => `
+    <div class="match-card">
+      <div class="match-header">
+        <span>Бой №${index + 1}</span>
+        <span style="color: #ff2a2a; font-weight: bold;">${m.category || 'Весовая не указана'}</span>
+      </div>
+      <div class="match-fighters">
+        <div class="fighter-box fighter-red">
+          <div class="fighter-name">${m.f1}</div>
+          <div class="fighter-club">Красный угол</div>
+        </div>
+        <div class="vs-badge">VS</div>
+        <div class="fighter-box fighter-blue">
+          <div class="fighter-name">${m.f2}</div>
+          <div class="fighter-club">Синий угол</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addMatchPair() {
+  const f1 = document.getElementById('pair-fighter1').value.trim();
+  const f2 = document.getElementById('pair-fighter2').value.trim();
+  const cat = document.getElementById('pair-category').value.trim();
+
+  if (!f1 || !f2) {
+    alert('Заполните ФИО обоих бойцов!');
+    return;
+  }
+
+  const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+  matches.push({ f1, f2, category: cat });
+  localStorage.setItem('rfc_matches', JSON.stringify(matches));
+
+  document.getElementById('pair-fighter1').value = '';
+  document.getElementById('pair-fighter2').value = '';
+  document.getElementById('pair-category').value = '';
+
+  alert('Пара успешно добавлена в сетку!');
+  loadBracketMatches();
+}
+
+
   </script>
 </body>
 </html>
