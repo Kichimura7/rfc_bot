@@ -209,17 +209,16 @@
     }
 
     @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
 
-.spinning {
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
-}
+    .spinning {
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
 
-
-/* Стили турнирной сетки */
+    /* Стили турнирной сетки */
     .match-card {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -280,8 +279,6 @@
       color: #ff2a2a;
       font-style: italic;
     }
-
-
   </style>
 </head>
 <body>
@@ -509,8 +506,8 @@
         </button>
       </div>
       <button id="btn-refresh-admin" onclick="loadAdminApplications()" class="btn-action" style="margin-bottom: 15px;">
-  <span id="refresh-icon" style="display: inline-block;">🔄</span> Обновить данные
-</button>
+        <span id="refresh-icon" style="display: inline-block;">🔄</span> Обновить данные
+      </button>
       <input type="text" id="admin-search" placeholder="Поиск по ФИО или клубу..." oninput="filterAdminApps()" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box; margin-bottom: 15px;">
       <div id="admin-apps-list">
         <p style="color: #8e8e93; text-align: center;">Загрузка заявок...</p>
@@ -549,7 +546,6 @@
       <span>Админка</span>
     </div>
   </div>
-
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyY5YQ82dZL7uCmEZW3icrbC_c_LF0KqSMfd67vEcZiaiGF6SAZKCI38KVG5Rcl6abypA/exec';
@@ -938,7 +934,5 @@
       loadBracketMatches();
     });
   </script>
-
-  
 </body>
 </html>
