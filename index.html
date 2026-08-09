@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <title>RFC App</title>
+  <style>
+    .hidden {
+      display: none !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #0b0c10;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 90px;
+      overflow-x: hidden;
+    }
+
+    .bg-glow {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(255, 42, 42, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+      top: 20%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .custom-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #ff3338;
+      border-radius: 3px;
+      outline: none;
+      margin: 10px 0;
+    }
+
+    .custom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
+
+    .custom-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
+
+    .app-header {
+      position: relative;
+      z-index: 1;
+      padding: 20px 16px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .logo-box {
+      position: relative;
+      width: 140px;
+      height: 140px;
+    }
+
+    .logo-img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: invert(1) brightness(1.2);
+    }
+
+    .logo-shine {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: invert(1) sepia(1) saturate(10000%) hue-rotate(330deg) drop-shadow(0 0 10px #ff2a2a);
+      -webkit-mask-image: linear-gradient(120deg, transparent 0%, transparent 38%, black 50%, transparent 62%, transparent 100%);
+      mask-image: linear-gradient(120deg, transparent 0%, transparent 38%, black 50%, transparent 62%, transparent 100%);
+      -webkit-mask-size: 250% 250%;
+      mask-size: 250% 250%;
+      animation: laserSweep 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes laserSweep {
+      0% { -webkit-mask-position: 140% 140%; mask-position: 140% 140%; }
+      80%, 100% { -webkit-mask-position: -40% -40%; mask-position: -40% -40%; }
+    }
+
+    .screen {
+      display: none;
+      padding: 0 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .card {
+      background: rgba(18, 19, 23, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ff2a2a;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 14px;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #8a8d93; }
+    .info-val { font-weight: 600; color: #fff; text-align: right; }
+
+    .btn-action {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ff2a2a 0%, #a80000 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(255, 42, 42, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:active { transform: scale(0.98); }
+
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1c1c1e;
+      padding: 8px 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 10px;
+      color: #8e8e93;
+      cursor: pointer;
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .nav-item.active {
+      color: #ff2a2a;
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      margin-bottom: 3px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .spinning {
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    .search-radar-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 10px;
+      text-align: center;
+    }
+
+    .radar-circle {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: rgba(255, 42, 42, 0.1);
+      border: 2px solid #ff2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+
+    .radar-circle::before, .radar-circle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      border: 2px solid #ff2a2a;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: radarPulse 2s infinite ease-out;
+      opacity: 0;
+    }
+
+    .radar-circle::after {
+      animation-delay: 1s;
+    }
+
+    @keyframes radarPulse {
+      0% { width: 100%; height: 100%; opacity: 0.8; }
+      100% { width: 220%; height: 220%; opacity: 0; }
+    }
+
+    .match-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #8e8e93;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 6px;
+    }
+
+    .match-fighters {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .fighter-box {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .fighter-red {
+      background: rgba(255, 42, 42, 0.15);
+      border: 1px solid rgba(255, 42, 42, 0.4);
+    }
+
+    .fighter-blue {
+      background: rgba(0, 122, 255, 0.15);
+      border: 1px solid rgba(0, 122, 255, 0.4);
+    }
+
+    .fighter-name {
+      font-weight: bold;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .fighter-club {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .vs-badge {
+      font-weight: 900;
+      font-size: 14px;
+      color: #ff2a2a;
+      font-style: italic;
+    }
+
+    .code-badge {
+      background: rgba(255, 42, 42, 0.2);
+      border: 1px dashed #ff2a2a;
+      color: #fff;
+      font-weight: bold;
+      font-size: 18px;
+      padding: 8px;
+      border-radius: 8px;
+      text-align: center;
+      letter-spacing: 2px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow"></div>
+
+  <div class="app-header">
+    <div class="logo-box">
+      <img src="image_4.png" alt="RFC Logo" class="logo-img" />
+      <img src="image_4.png" alt="RFC Logo Shine" class="logo-shine" />
+    </div>
+  </div>
+
+  <!-- ЭКРАН 0: Форма регистрации -->
+  <div id="screen-application" class="screen">
+    <div class="card">
+      <h3 style="color: #ff3338; margin-bottom: 20px; font-weight: 800; text-align: center;">ЛИГА RFC 20</h3>
+
+      <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
+        <div>
+          <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">ФИО участника</label>
+          <input type="text" id="reg-fullname" placeholder="Иванов Иван Иванович" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
+        </div>
+
+        <div>
+          <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">Клуб / Команда</label>
+          <input type="text" id="reg-club" placeholder="Название клуба или «Самостоятельно»" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 14px; font-weight: bold; color: #fff;">Возраст:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="age-val">18</span> лет</span>
+          </div>
+          <input type="range" id="reg-age" min="6" max="60" value="18" step="1" class="custom-slider">
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 14px; font-weight: bold; color: #fff;">Весовая категория:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #ff3338;" id="weight-val">57 кг</span>
+          </div>
+          <input type="range" id="reg-weight" min="0" max="7" value="0" step="1" class="custom-slider">
+        </div>
+
+        <button id="btn-submit" style="margin-top: 10px; background: #e5252a; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; text-transform: uppercase;">
+          ОТПРАВИТЬ ЗАЯВКУ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Вкладка: ЗАЯВКА И ОПЛАТА -->
+  <div id="tab-apply" class="screen">
+    <div class="card">
+      <div class="card-title">Подача заявки</div>
+      <div class="info-row">
+        <span class="info-label">Статус:</span>
+        <span class="info-val" id="pay-status" style="color: #ffaa00;">Ожидает подтверждения</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Сумма к оплате:</span>
+        <span class="info-val" style="color: #ff2a2a; font-size: 18px; font-weight: bold;">1000 ₽</span>
+      </div>
+    </div>
+
+    <!-- Инструкция по оплате -->
+    <div class="card">
+      <div class="card-title">Инструкция по оплате</div>
+      
+      <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.4;">
+        1. Переведите <b>1000 ₽</b> по номеру карты или телефона ниже.<br>
+        2. В поле <b>«Комментарий к переводу»</b> обязательно укажите ваш уникальный код:
+      </p>
+
+      <div class="code-badge">
+        Код: <span id="user-pay-code">7593</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Карта / Телефон:</span>
+        <span class="info-val" style="color: #fff; font-weight: bold;">+7 939 768 58 75</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Банк:</span>
+        <span class="info-val">Сбербанк / Т-Банк</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Получатель:</span>
+        <span class="info-val">Оргкомитет RFC</span>
+      </div>
+
+      <button class="btn-action" onclick="copyPhoneToClipboard()" style="background: linear-gradient(135deg, #007aff 0%, #0040aa 100%); margin-top: 14px;">
+        📲 Скопировать реквизиты
+      </button>
+    </div>
+
+    <!-- Подтверждение оплаты -->
+    <div class="card">
+      <div class="card-title">Подтверждение оплаты</div>
+      <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
+        После перевода с указанным кодом нажмите кнопку ниже. Организаторы проверят поступление и подтвердят ваше участие.
+      </p>
+
+      <button class="btn-action" id="btn-send-receipt" onclick="submitReceipt()" style="background: #28a745;">
+        🚀 Подтвердить оплату
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Вкладка: ПОИСК СОПЕРНИКА -->
+  <div id="tab-match" class="screen">
+    <div class="card">
+      <div class="card-title">Поиск пары (1v1)</div>
+      <div class="info-row">
+        <span class="info-label">Твой профиль:</span>
+        <span class="info-val" id="match-user-weight">Загрузка...</span>
+      </div>
+      <button class="btn-action" id="btn-start-search" onclick="startOpponentSearch()">
+        🔍 Найти соперника
+      </button>
+    </div>
+
+    <div id="search-animation-box" class="card hidden">
+      <div class="search-radar-box">
+        <div class="radar-circle">🥊</div>
+        <h4 style="color: #ff2a2a; margin-bottom: 6px;">Сканируем базу участников...</h4>
+        <p style="font-size: 12px; color: #8e8e93;">Подбираем бойцов в вашей весовой категории</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Доступные соперники</div>
+      <div id="opponents-list">
+        <p style="color: #8e8e93; text-align: center; font-size: 13px; padding: 10px 0;">
+          Нажмите «Найти соперника», чтобы запустился поиск по категории.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Вкладка: ИНФОРМАЦИЯ И ВЗВЕШИВАНИЕ -->
+  <div id="tab-info" class="screen">
+    <div class="card">
+      <div class="card-title">МЕСТО И ВРЕМЯ</div>
+      <div class="info-row">
+        <span class="info-label">Локация:</span>
+        <span class="info-val" id="info-location">г. Грозный, Sport Hall Колизей</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Взвешивание:</span>
+        <span class="info-val" id="info-weighin">28 июля (допуск -1кг)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Бои:</span>
+        <span class="info-val" id="info-fights">29 июля</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Основной кард:</span>
+        <span class="info-val" id="info-maincard">30 июля</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ПРАВИЛА И РЕГЛАМЕНТ</div>
+      <p id="info-rules" style="font-size: 13px; color: #ccc; line-height: 1.5; white-space: pre-wrap;">
+1. Допускаются участники с подтвержденной медицинской справкой и страховкой.
+2. Форма одежды: шорты ММА/грепплинг, рашгард, капа, бинты, защита голени и паха.
+3. Процедура взвешивания обязательна для всех бойцов. Перевес свыше допустимой нормы влечет дисквалификацию.
+4. Регламент раундов: 3 раунда по 3 минуты (для профессионалов) / 3 раунда по 2 минуты (для любителей).
+      </p>
+    </div>
+  </div>
+
+  <!-- 4. Вкладка: НОВОСТИ -->
+  <div id="tab-news" class="screen">
+    <div class="card">
+      <div class="card-title">Главный кард сформирован!</div>
+      <p style="font-size: 13px; color: #ccc; line-height: 1.4;">
+        Опубликован полный список поединков на предстоящий турнир RFC. Проверяйте сетку в личном кабинете.
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">Правила взвешивания</div>
+      <p style="font-size: 13px; color: #ccc; line-height: 1.4;">
+        Допускается перевес (допуск -1 кг по регламенту RFC 20). Не прошедшие взвешивание участники дисквалифицируются.
+      </p>
+    </div>
+  </div>
+
+  <!-- 5. Вкладка: ПРОФИЛЬ -->
+  <div id="tab-profile" class="screen">
+    <div class="card">
+      <div class="card-title">ПРОФИЛЬ БОЙЦА</div>
+      
+      <div class="info-row">
+        <span class="info-label">ФИО:</span>
+        <span class="info-val" id="prof-fullname">Не указано</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Возраст:</span>
+        <span class="info-val" id="prof-age">—</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Весовая:</span>
+        <span class="info-val" id="prof-weight">—</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Клуб:</span>
+        <span class="info-val" id="prof-club">—</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">Рекорд:</span>
+        <span class="info-val">0-0-0</span>
+      </div>
+
+      <button id="btn-reset" style="margin-top: 15px; background: #ff4444; color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold;">
+        Сбросить данные (для тестов)
+      </button>
+    </div>
+  </div>
+
+  <!-- Вкладка: ТУРНИРНАЯ СЕТКА -->
+  <div id="tab-bracket" class="screen">
+    <div class="card">
+      <div class="card-title" style="text-align: center;">🏆 СЕТКА БОЁВ</div>
+      <p style="font-size: 12px; color: #8e8e93; text-align: center; margin-bottom: 15px;">
+        Официальный файткард предстоящего турнира
+      </p>
+
+      <div id="bracket-matches-list">
+        <p style="color: #8e8e93; text-align: center;">Идет формирование сетки боев...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Вкладка: АДМИН-ПАНЕЛЬ -->
+  <div id="tab-admin" class="screen">
+    <div class="card">
+      <h2 style="margin-bottom: 12px; color: #ff2a2a;">Панель администратора</h2>
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; flex: 1; text-align: center;">
+          <span id="total-apps-count" style="font-size: 22px; font-weight: bold; color: #ff3b30;">0</span>
+          <p style="font-size: 12px; color: #8e8e93; margin-top: 4px;">Всего заявок</p>
+        </div>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.08);">
+        <h4 style="color: #ff3338; margin-bottom: 10px; font-size: 14px;">⚙️ Редактирование вкладки «Инфо»</h4>
+        
+        <label style="font-size: 11px; color: #aaa;">Локация:</label>
+        <input type="text" id="admin-info-location" placeholder="Например: г. Грозный, Sport Hall Колизей" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Взвешивание:</label>
+        <input type="text" id="admin-info-weighin" placeholder="Например: 28 июля (допуск -1кг)" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Бои:</label>
+        <input type="text" id="admin-info-fights" placeholder="Например: 29 июля" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Основной кард:</label>
+        <input type="text" id="admin-info-maincard" placeholder="Например: 30 июля" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Правила и регламент:</label>
+        <textarea id="admin-info-rules" rows="5" placeholder="Текст правил и регламента..." style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 10px; font-size: 13px; resize: vertical;"></textarea>
+
+        <button onclick="saveInfoData()" style="width: 100%; background: #007aff; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;">
+          💾 Сохранить раздел Инфо
+        </button>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.08);">
+        <h4 style="color: #ff3338; margin-bottom: 10px; font-size: 14px;">➕ Сформировать пару</h4>
+        
+        <label style="font-size: 11px; color: #aaa;">Красный угол (Боец 1):</label>
+        <input type="text" id="pair-fighter1" placeholder="ФИО первого бойца" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Синий угол (Боец 2):</label>
+        <input type="text" id="pair-fighter2" placeholder="ФИО второго бойца" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Весовая категория / Вес:</label>
+        <input type="text" id="pair-category" placeholder="Например: До 77 кг" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
+
+        <label style="font-size: 11px; color: #aaa;">Возрастная категория / Возраст:</label>
+        <input type="text" id="pair-age" placeholder="Например: 18+ лет или 14-15 лет" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 10px; font-size: 13px;">
+
+        <button onclick="addMatchPair()" style="width: 100%; background: #28a745; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;">
+          Сохранить пару в сетку
+        </button>
+      </div>
+
+      <button id="btn-refresh-admin" onclick="loadAdminApplications()" class="btn-action" style="margin-bottom: 15px;">
+        <span id="refresh-icon" style="display: inline-block;">🔄</span> Обновить данные
+      </button>
+      <input type="text" id="admin-search" placeholder="Поиск по ФИО или клубу..." oninput="filterAdminApps()" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box; margin-bottom: 15px;">
+      <div id="admin-apps-list">
+        <p style="color: #8e8e93; text-align: center;">Загрузка заявок...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Нижняя панель навигации -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-tab="tab-apply">
+      <span class="nav-icon">📝</span>
+      <span>Заявка</span>
+    </div>
+    <div class="nav-item" data-tab="tab-match">
+      <span class="nav-icon">🥊</span>
+      <span>Соперник</span>
+    </div>
+    <div class="nav-item" data-tab="tab-info">
+      <span class="nav-icon">📍</span>
+      <span>Инфо</span>
+    </div>
+    <div class="nav-item" data-tab="tab-news">
+      <span class="nav-icon">📰</span>
+      <span>Новости</span>
+    </div>
+    <div class="nav-item" data-tab="tab-profile">
+      <span class="nav-icon">👤</span>
+      <span>Профиль</span>
+    </div>
+    <div class="nav-item" data-tab="tab-bracket">
+      <span class="nav-icon">🏆</span>
+      <span>Сетка</span>
+    </div>
+    <div class="nav-item hidden" id="nav-admin" data-tab="tab-admin">
+      <span class="nav-icon">🛠️</span>
+      <span>Админка</span>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyY5YQ82dZL7uCmEZW3icrbC_c_LF0KqSMfd67vEcZiaiGF6SAZKCI38KVG5Rcl6abypA/exec';
+
+    const ADMIN_IDS = ["8613061969", "6709505823"]; 
+
+    let allApplications = [];
+    let currentWeights = [];
+
+    const weightRules = [
+      { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
+      { minAge: 8, maxAge: 9, weights: ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"] },
+      { minAge: 10, maxAge: 11, weights: ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг"] },
+      { minAge: 12, maxAge: 13, weights: ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг"] },
+      { minAge: 14, maxAge: 15, weights: ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг"] },
+      { minAge: 16, maxAge: 17, weights: ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"] },
+      { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
+    ];
+
+    function showTgAlert(message) {
+      try {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.showAlert) {
+          window.Telegram.WebApp.showAlert(message);
+        } else {
+          alert(message);
+        }
+      } catch (e) {
+        alert(message);
+      }
+    }
+
+    function triggerHaptic(type = 'medium') {
+      try {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
+        }
+      } catch (e) {}
+    }
+
+    /* Генерация / Получение уникального кода перевода */
+    function initUserCode() {
+      let code = localStorage.getItem('rfc_pay_code');
+      if (!code) {
+        code = Math.floor(1000 + Math.random() * 9000).toString();
+        localStorage.setItem('rfc_pay_code', code);
+      }
+      const codeEl = document.getElementById('user-pay-code');
+      if (codeEl) codeEl.textContent = code;
+    }
+
+    function copyPhoneToClipboard() {
+      const textToCopy = "+79397685875";
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          triggerHaptic('light');
+          showTgAlert("Номер скопирован! При переводе укажите код в комментарии.");
+        }).catch(() => {
+          showTgAlert("Номер для перевода: +7 939 768 58 75");
+        });
+      } else {
+        showTgAlert("Номер для перевода: +7 939 768 58 75");
+      }
+    }
+
+    /* Прямая отправка данных оплаты в Telegram бота */
+    function submitReceipt() {
+      triggerHaptic('medium');
+
+      const userCode = localStorage.getItem('rfc_pay_code') || '7593';
+      const fullname = localStorage.getItem('rfc_fullname') || 'Не указано';
+      const age = localStorage.getItem('rfc_age') || 'Не указан';
+      const weight = localStorage.getItem('rfc_weight') || 'Не указана';
+      const club = localStorage.getItem('rfc_club') || 'Не указан';
+
+      const data = {
+        type: 'receipt_submission',
+        code: userCode,
+        fullname: fullname,
+        age: age,
+        weight: weight,
+        club: club
+      };
+
+      if (window.Telegram && window.Telegram.WebApp) {
+        Telegram.WebApp.sendData(JSON.stringify(data));
+      } else {
+        showTgAlert("Ошибка: Отправка доступна только внутри приложения Telegram!");
+      }
+    }
+
+    function checkIsAdmin() {
+      const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+      const user = (tg && tg.initDataUnsafe) ? tg.initDataUnsafe.user : null;
+      
+      if (user && ADMIN_IDS.includes(String(user.id))) {
+        return true;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('admin') === 'true';
+    }
+
+    function updateWeightDisplay() {
+      const weightInput = document.getElementById('reg-weight');
+      const weightLabel = document.getElementById('weight-val');
+      if (!weightInput || !weightLabel || !currentWeights.length) return;
+      
+      let idx = parseInt(weightInput.value) || 0;
+      if (idx >= currentWeights.length) idx = currentWeights.length - 1;
+      
+      weightLabel.textContent = currentWeights[idx];
+    }
+
+    function updateWeightOptions() {
+      const ageInput = document.getElementById('reg-age');
+      const ageLabel = document.getElementById('age-val');
+      const weightInput = document.getElementById('reg-weight');
+      
+      if (!ageInput || !ageLabel || !weightInput) return;
+
+      const age = parseInt(ageInput.value);
+      ageLabel.textContent = age;
+
+      const group = weightRules.find(g => age >= g.minAge && age <= g.maxAge) || weightRules[weightRules.length - 1];
+      currentWeights = group.weights;
+
+      weightInput.min = 0;
+      weightInput.max = currentWeights.length - 1;
+
+      if (parseInt(weightInput.value) >= currentWeights.length) {
+        weightInput.value = 0;
+      }
+
+      updateWeightDisplay();
+    }
+
+    function switchTab(tabId, element) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
+      });
+
+      let targetId = tabId;
+      if (tabId === 'tab-apply') {
+        const isApplied = localStorage.getItem('rfc_applied');
+        targetId = (isApplied === 'true') ? 'tab-apply' : 'screen-application';
+      }
+
+      const targetScreen = document.getElementById(targetId);
+      if (targetScreen) {
+        targetScreen.classList.add('active');
+        targetScreen.style.display = 'block';
+      }
+
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      if (element) {
+        element.classList.add('active');
+      } else {
+        const navEl = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+        if (navEl) navEl.classList.add('active');
+      }
+
+      if (targetId === 'tab-apply') {
+        initUserCode();
+      }
+
+      if (tabId === 'tab-match') {
+        initMatchTabInfo();
+      }
+
+      if (tabId === 'tab-admin') {
+        loadAdminApplications();
+        initAdminInfoForm();
+      }
+
+      if (tabId === 'tab-info') {
+        loadInfoData();
+      }
+
+      if (tabId === 'tab-bracket') {
+        loadBracketMatches();
+      }
+    }
+
+    /* ФУНКЦИИ УПРАВЛЕНИЯ РАЗДЕЛОМ «ИНФО» */
+    function loadInfoData() {
+      const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
+
+      const loc = document.getElementById('info-location');
+      const weighin = document.getElementById('info-weighin');
+      const fights = document.getElementById('info-fights');
+      const maincard = document.getElementById('info-maincard');
+      const rules = document.getElementById('info-rules');
+
+      if (loc && infoData.location) loc.textContent = infoData.location;
+      if (weighin && infoData.weighin) weighin.textContent = infoData.weighin;
+      if (fights && infoData.fights) fights.textContent = infoData.fights;
+      if (maincard && infoData.maincard) maincard.textContent = infoData.maincard;
+      if (rules && infoData.rules) rules.textContent = infoData.rules;
+    }
+
+    function initAdminInfoForm() {
+      const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
+
+      const locInput = document.getElementById('admin-info-location');
+      const weighinInput = document.getElementById('admin-info-weighin');
+      const fightsInput = document.getElementById('admin-info-fights');
+      const maincardInput = document.getElementById('admin-info-maincard');
+      const rulesInput = document.getElementById('admin-info-rules');
+
+      const currentLoc = document.getElementById('info-location');
+      const currentWeighin = document.getElementById('info-weighin');
+      const currentFights = document.getElementById('info-fights');
+      const currentMaincard = document.getElementById('info-maincard');
+      const currentRules = document.getElementById('info-rules');
+
+      if (locInput) locInput.value = infoData.location || (currentLoc ? currentLoc.textContent : '');
+      if (weighinInput) weighinInput.value = infoData.weighin || (currentWeighin ? currentWeighin.textContent : '');
+      if (fightsInput) fightsInput.value = infoData.fights || (currentFights ? currentFights.textContent : '');
+      if (maincardInput) maincardInput.value = infoData.maincard || (currentMaincard ? currentMaincard.textContent : '');
+      if (rulesInput) rulesInput.value = infoData.rules || (currentRules ? currentRules.textContent.trim() : '');
+    }
+
+    function saveInfoData() {
+      const infoData = {
+        location: document.getElementById('admin-info-location').value.trim(),
+        weighin: document.getElementById('admin-info-weighin').value.trim(),
+        fights: document.getElementById('admin-info-fights').value.trim(),
+        maincard: document.getElementById('admin-info-maincard').value.trim(),
+        rules: document.getElementById('admin-info-rules').value.trim()
+      };
+
+      localStorage.setItem('rfc_info_data', JSON.stringify(infoData));
+      triggerHaptic('medium');
+      showTgAlert('Раздел «Инфо» успешно обновлен!');
+      loadInfoData();
+    }
+
+    function updateProfileUI() {
+      const fullname = localStorage.getItem('rfc_fullname');
+      const age = localStorage.getItem('rfc_age');
+      const weight = localStorage.getItem('rfc_weight');
+      const club = localStorage.getItem('rfc_club');
+
+      if (fullname && document.getElementById('prof-fullname')) document.getElementById('prof-fullname').textContent = fullname;
+      if (age && document.getElementById('prof-age')) document.getElementById('prof-age').textContent = age;
+      if (weight && document.getElementById('prof-weight')) document.getElementById('prof-weight').textContent = weight;
+      if (club && document.getElementById('prof-club')) document.getElementById('prof-club').textContent = club;
+      
+      initMatchTabInfo();
+    }
+
+    function initMatchTabInfo() {
+      const userWeight = localStorage.getItem('rfc_weight') || 'Не указан';
+      const userAge = localStorage.getItem('rfc_age') || '';
+      const displayEl = document.getElementById('match-user-weight');
+      
+      if (displayEl) {
+        displayEl.textContent = userAge ? `${userWeight} (${userAge})` : userWeight;
+      }
+    }
+
+    /* ФУНКЦИИ ПОИСКА СОПЕРНИКА */
+    function startOpponentSearch() {
+      triggerHaptic('medium');
+
+      const animBox = document.getElementById('search-animation-box');
+      const listContainer = document.getElementById('opponents-list');
+      const btn = document.getElementById('btn-start-search');
+
+      if (!animBox || !listContainer) return;
+
+      animBox.classList.remove('hidden');
+      if (btn) btn.disabled = true;
+
+      listContainer.innerHTML = '<p style="color: #8e8e93; text-align: center; font-size: 13px;">Идет сканирование реестра...</p>';
+
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(response => {
+          if (response.result === 'success') {
+            const myName = (localStorage.getItem('rfc_fullname') || '').toLowerCase().trim();
+            const myWeight = (localStorage.getItem('rfc_weight') || '').trim();
+
+            const candidates = (response.data || []).filter(app => {
+              const appName = (app.fullname || '').toLowerCase().trim();
+              const isNotMe = myName ? appName !== myName : true;
+              const matchesWeight = app.weight === myWeight;
+              return isNotMe && matchesWeight;
+            });
+
+            setTimeout(() => {
+              animBox.classList.add('hidden');
+              if (btn) btn.disabled = false;
+              renderOpponents(candidates);
+            }, 1200);
+
+          } else {
+            animBox.classList.add('hidden');
+            if (btn) btn.disabled = false;
+            listContainer.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки базы</p>';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          animBox.classList.add('hidden');
+          if (btn) btn.disabled = false;
+          listContainer.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка подключения к серверу</p>';
+        });
+    }
+
+    function renderOpponents(opponents) {
+      const container = document.getElementById('opponents-list');
+      if (!container) return;
+
+      if (!opponents || opponents.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 15px 0;">
+            <p style="color: #ffaa00; font-size: 14px; font-weight: bold;">Соперников пока нет</p>
+            <p style="color: #8e8e93; font-size: 12px; margin-top: 4px;">В вашей весовой категории еще никто не зарегистрировался.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = opponents.map(op => `
+        <div class="info-row" style="align-items: center; padding: 10px 0;">
+          <div style="text-align: left;">
+            <div style="font-weight: bold; color: #fff;">${op.fullname || 'Анонимный боец'}</div>
+            <div style="font-size: 11px; color: #8e8e93;">Клуб: ${op.club || 'Самостоятельно'} | ${op.age || ''}</div>
+          </div>
+          <button onclick="sendChallenge('${(op.fullname || 'Боец').replace(/'/g, "\\'")}')" style="background: #ff2a2a; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
+            Вызвать
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function sendChallenge(name) {
+      triggerHaptic('heavy');
+
+      const myName = localStorage.getItem('rfc_fullname') || 'Боец';
+      const data = {
+        type: 'challenge',
+        target_name: name,
+        from_name: myName
+      };
+
+      if (window.Telegram && window.Telegram.WebApp) {
+        Telegram.WebApp.sendData(JSON.stringify(data));
+      } else {
+        showTgAlert(`Вызов отправлен бойцу ${name}! Ожидайте подтверждения от организаторов.`);
+      }
+    }
+
+    function submitApplication() {
+      const fullname = document.getElementById('reg-fullname').value;
+      const club = document.getElementById('reg-club').value;
+      const age = document.getElementById('reg-age').value + ' лет';
+      const weight = document.getElementById('weight-val').textContent;
+
+      if (!fullname.trim()) {
+        showTgAlert('Пожалуйста, введите ФИО!');
+        return;
+      }
+
+      let telegramId = 'Не указан';
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        const user = window.Telegram.WebApp.initDataUnsafe.user;
+        telegramId = user.username ? `@${user.username}` : `ID: ${user.id}`;
+      }
+
+      const payload = {
+        fullname: fullname,
+        club: club || 'Самостоятельно',
+        age: age,
+        weight: weight,
+        telegram_id: telegramId
+      };
+
+      localStorage.setItem('rfc_applied', 'true');
+      localStorage.setItem('rfc_fullname', fullname);
+      localStorage.setItem('rfc_age', age);
+      localStorage.setItem('rfc_weight', weight);
+      localStorage.setItem('rfc_club', club || 'Самостоятельно');
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error('Ошибка отправки:', err));
+
+      const regData = {
+        type: 'registration',
+        fullname: fullname,
+        club: club || 'Самостоятельно',
+        age: age,
+        weight: weight,
+        code: localStorage.getItem('rfc_pay_code') || ''
+      };
+
+      if (window.Telegram && window.Telegram.WebApp) {
+        Telegram.WebApp.sendData(JSON.stringify(regData));
+      } else {
+        updateProfileUI();
+        triggerHaptic('medium');
+        switchTab('tab-apply');
+      }
+    }
+
+    function checkAdminAccess() {
+      const isAdmin = checkIsAdmin();
+      const adminNav = document.getElementById('nav-admin');
+      if (adminNav) {
+        if (isAdmin) {
+          adminNav.classList.remove('hidden');
+          adminNav.style.display = 'flex';
+        } else {
+          adminNav.classList.add('hidden');
+          adminNav.style.display = 'none';
+        }
+      }
+    }
+
+    function loadAdminApplications() {
+      const container = document.getElementById('admin-apps-list');
+      const icon = document.getElementById('refresh-icon');
+      const btn = document.getElementById('btn-refresh-admin');
+      if (!container) return;
+
+      if (icon) icon.classList.add('spinning');
+      if (btn) btn.style.opacity = '0.7';
+
+      triggerHaptic('light');
+
+      container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Загрузка данных...</p>';
+
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(response => {
+          if (response.result === 'success') {
+            allApplications = response.data || [];
+            const countEl = document.getElementById('total-apps-count');
+            if (countEl) countEl.textContent = allApplications.length;
+            renderAdminApps(allApplications);
+          } else {
+            container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
+        })
+        .finally(() => {
+          if (icon) icon.classList.remove('spinning');
+          if (btn) btn.style.opacity = '1';
+        });
+    }
+
+    function renderAdminApps(apps) {
+      const container = document.getElementById('admin-apps-list');
+      if (!container) return;
+
+      if (!apps || apps.length === 0) {
+        container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Заявок пока нет</p>';
+        return;
+      }
+
+      container.innerHTML = apps.map(app => `
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <strong style="color:#fff;">${app.fullname || 'Без имени'}</strong>
+            <span style="background: #ff3b30; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">${app.weight || '-'}</span>
+          </div>
+          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Клуб:</strong> ${app.club || '-'}</p>
+          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Возраст:</strong> ${app.age || '-'}</p>
+          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Контакты:</strong> ${app.telegram_id || '-'}</p>
+          <p style="font-size: 11px; color: #8e8e93; margin-top: 6px;">${app.timestamp || ''}</p>
+          
+          <button onclick="deleteApplication(${app.row})" style="margin-top: 8px; background: rgba(255, 59, 48, 0.2); color: #ff3b30; border: 1px solid #ff3b30; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;">
+            🗑️ Удалить заявку
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function deleteApplication(rowIndex) {
+      if (!confirm("Вы действительно хотите удалить эту заявку?")) return;
+
+      const deleteUrl = `${SCRIPT_URL}?action=delete&row=${rowIndex}`;
+
+      fetch(deleteUrl)
+        .then(res => res.json())
+        .then(response => {
+          if (response.result === 'success') {
+            showTgAlert('Заявка успешно удалена!');
+            loadAdminApplications();
+          } else {
+            showTgAlert('Ошибка при удалении');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          setTimeout(() => {
+            loadAdminApplications();
+          }, 1000);
+        });
+    }
+
+    function filterAdminApps() {
+      const searchInput = document.getElementById('admin-search');
+      if (!searchInput) return;
+      const query = searchInput.value.toLowerCase();
+      const filtered = allApplications.filter(app => 
+        (app.fullname && app.fullname.toLowerCase().includes(query)) ||
+        (app.club && app.club.toLowerCase().includes(query))
+      );
+      renderAdminApps(filtered);
+    }
+
+    /* ФУНКЦИИ СЕТКИ БОЁВ */
+    function loadBracketMatches() {
+      const container = document.getElementById('bracket-matches-list');
+      if (!container) return;
+
+      const savedMatches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+
+      if (savedMatches.length === 0) {
+        container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Пар пока нет. Админ формирует сетку.</p>';
+        return;
+      }
+
+      const isAdmin = checkIsAdmin();
+
+      container.innerHTML = savedMatches.map((m, index) => `
+        <div class="match-card">
+          <div class="match-header">
+            <span>Бой №${index + 1}</span>
+            <span style="color: #ff2a2a; font-weight: bold;">
+              ${m.category || 'Весовая не указана'}${m.age ? ' (' + m.age + ')' : ''}
+            </span>
+          </div>
+          <div class="match-fighters">
+            <div class="fighter-box fighter-red">
+              <div class="fighter-name">${m.f1}</div>
+              <div class="fighter-club">Красный угол</div>
+            </div>
+            <div class="vs-badge">VS</div>
+            <div class="fighter-box fighter-blue">
+              <div class="fighter-name">${m.f2}</div>
+              <div class="fighter-club">Синий угол</div>
+            </div>
+          </div>
+          ${isAdmin ? `
+            <button onclick="deleteMatchPair(${index})" style="margin-top: 10px; background: rgba(255, 59, 48, 0.15); color: #ff3b30; border: 1px solid #ff3b30; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;">
+              🗑️ Удалить бой
+            </button>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    function addMatchPair() {
+      const f1 = document.getElementById('pair-fighter1').value.trim();
+      const f2 = document.getElementById('pair-fighter2').value.trim();
+      const cat = document.getElementById('pair-category').value.trim();
+      const age = document.getElementById('pair-age').value.trim();
+
+      if (!f1 || !f2) {
+        showTgAlert('Заполните ФИО обоих бойцов!');
+        return;
+      }
+
+      const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+      matches.push({ f1, f2, category: cat, age: age });
+      localStorage.setItem('rfc_matches', JSON.stringify(matches));
+
+      document.getElementById('pair-fighter1').value = '';
+      document.getElementById('pair-fighter2').value = '';
+      document.getElementById('pair-category').value = '';
+      document.getElementById('pair-age').value = '';
+
+      showTgAlert('Пара успешно добавлена в сетку!');
+      loadBracketMatches();
+    }
+
+    function deleteMatchPair(index) {
+      if (!confirm("Вы действительно хотите удалить этот бой из сетки?")) return;
+
+      const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+      matches.splice(index, 1);
+      localStorage.setItem('rfc_matches', JSON.stringify(matches));
+
+      triggerHaptic('medium');
+      loadBracketMatches();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+      }
+
+      const ageInput = document.getElementById('reg-age');
+      const weightInput = document.getElementById('reg-weight');
+      const submitBtn = document.getElementById('btn-submit');
+      const resetBtn = document.getElementById('btn-reset');
+
+      if (ageInput) ageInput.addEventListener('input', updateWeightOptions);
+      if (weightInput) weightInput.addEventListener('input', updateWeightDisplay);
+      if (submitBtn) submitBtn.addEventListener('click', submitApplication);
+      
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          const savedMatches = localStorage.getItem('rfc_matches');
+          const savedInfo = localStorage.getItem('rfc_info_data');
+          localStorage.clear();
+          if (savedMatches) {
+            localStorage.setItem('rfc_matches', savedMatches);
+          }
+          if (savedInfo) {
+            localStorage.setItem('rfc_info_data', savedInfo);
+          }
+          location.reload();
+        });
+      }
+
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const tabId = this.getAttribute('data-tab');
+          switchTab(tabId, this);
+        });
+      });
+
+      updateWeightOptions();
+
+      switchTab('tab-apply');
+      updateProfileUI();
+      checkAdminAccess();
+      loadBracketMatches();
+      loadInfoData();
+      initUserCode();
+    });
+  </script>
+</body>
+</html>
