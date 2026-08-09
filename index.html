@@ -433,17 +433,24 @@
       </button>
     </div>
 
-    <!-- Подтверждение оплаты -->
-    <div class="card">
-      <div class="card-title">Подтверждение оплаты</div>
-      <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
-        После перевода с указанным кодом нажмите кнопку ниже. Организаторы проверят поступление и подтвердят ваше участие.
-      </p>
+<!-- Подтверждение оплаты -->
+<div class="card">
+  <div class="card-title">Подтверждение оплаты</div>
+  <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
+    После перевода с указанным кодом прикрепите скриншот чека и нажмите кнопку ниже.
+  </p>
 
-      <button class="btn-action" id="btn-send-receipt" onclick="submitReceipt()" style="background: #28a745;">
-        🚀 Подтвердить оплату
-      </button>
-    </div>
+  <!-- Скрытый инпут для файла и кнопка выбора -->
+  <input type="file" id="receiptFile" accept="image/*" style="display: none;" onchange="handleFileSelected(this)">
+  <button class="btn-action" onclick="document.getElementById('receiptFile').click()" style="background: #333; margin-bottom: 8px;">
+    📸 Прикрепить скриншот чека
+  </button>
+  <div id="file-name-display" style="font-size: 11px; color: #888; margin-bottom: 12px;">Файл не выбран</div>
+
+  <button class="btn-action" id="btn-send-receipt" onclick="submitReceipt()" style="background: #28a745;">
+    🚀 Подтвердить оплату
+  </button>
+</div>
   </div>
 
   <!-- 2. Вкладка: ПОИСК СОПЕРНИКА -->
@@ -735,31 +742,67 @@
       }
     }
 
-    /* Прямая отправка данных оплаты в Telegram бота */
-    function submitReceipt() {
-      triggerHaptic('medium');
-
-      const userCode = localStorage.getItem('rfc_pay_code') || '7593';
-      const fullname = localStorage.getItem('rfc_fullname') || 'Не указано';
-      const age = localStorage.getItem('rfc_age') || 'Не указан';
-      const weight = localStorage.getItem('rfc_weight') || 'Не указана';
-      const club = localStorage.getItem('rfc_club') || 'Не указан';
-
-      const data = {
-        type: 'receipt_submission',
-        code: userCode,
-        fullname: fullname,
-        age: age,
-        weight: weight,
-        club: club
-      };
-
-      if (window.Telegram && window.Telegram.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify(data));
+    function handleFileSelected(input) {
+      const display = document.getElementById('file-name-display');
+      if (!display) return;
+      if (input.files && input.files[0]) {
+        display.textContent = "Выбран файл: " + input.files[0].name;
+        display.style.color = "#28a745";
       } else {
-        showTgAlert("Ошибка: Отправка доступна только внутри приложения Telegram!");
+        display.textContent = "Файл не выбран";
+        display.style.color = "#888";
       }
     }
+
+    /* Отправка чека об оплате вместе с данными бойца в Telegram-бота */
+    function submitReceipt() {
+      const fileInput = document.getElementById('receiptFile');
+      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showTgAlert('Пожалуйста, прикрепите скриншот чека!');
+        return;
+      }
+
+      triggerHaptic('medium');
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const base64Image = e.target.result;
+
+        const userCode = localStorage.getItem('rfc_pay_code') || '';
+        const fullname = localStorage.getItem('rfc_fullname') || 'Не указано';
+        const age = localStorage.getItem('rfc_age') || 'Не указан';
+        const weight = localStorage.getItem('rfc_weight') || 'Не указана';
+        const club = localStorage.getItem('rfc_club') || 'Не указан';
+
+        const data = {
+          type: 'receipt_submission',
+          status: 'payment_proof',
+          code: userCode,
+          fullname: fullname,
+          age: age,
+          weight: weight,
+          club: club,
+          image: base64Image,
+          filename: file.name
+        };
+
+        if (window.Telegram && window.Telegram.WebApp) {
+          window.Telegram.WebApp.sendData(JSON.stringify(data));
+        } else {
+          console.log("Mock send data:", data);
+          showTgAlert('Чек успешно отправлен!');
+        }
+      };
+
+      reader.onerror = function() {
+        showTgAlert('Не удалось прочитать файл. Попробуйте снова.');
+      };
+
+      reader.readAsDataURL(file);
+    }
+
 
     function checkIsAdmin() {
       const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
