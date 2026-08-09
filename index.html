@@ -433,24 +433,24 @@
       </button>
     </div>
 
-<!-- Подтверждение оплаты -->
-<div class="card">
-  <div class="card-title">Подтверждение оплаты</div>
-  <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
-    После перевода с указанным кодом прикрепите скриншот чека и нажмите кнопку ниже.
-  </p>
+    <!-- Подтверждение оплаты -->
+    <div class="card">
+      <div class="card-title">Подтверждение оплаты</div>
+      <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
+        После перевода с указанным кодом прикрепите скриншот чека и нажмите кнопку ниже.
+      </p>
 
-  <!-- Скрытый инпут для файла и кнопка выбора -->
-  <input type="file" id="receiptFile" accept="image/*" style="display: none;" onchange="handleFileSelected(this)">
-  <button class="btn-action" onclick="document.getElementById('receiptFile').click()" style="background: #333; margin-bottom: 8px;">
-    📸 Прикрепить скриншот чека
-  </button>
-  <div id="file-name-display" style="font-size: 11px; color: #888; margin-bottom: 12px;">Файл не выбран</div>
+      <!-- Скрытый инпут для файла и кнопка выбора -->
+      <input type="file" id="receiptFile" accept="image/*" style="display: none;" onchange="handleFileSelected(this)">
+      <button class="btn-action" onclick="document.getElementById('receiptFile').click()" style="background: #333; margin-bottom: 8px;">
+        📸 Прикрепить скриншот чека
+      </button>
+      <div id="file-name-display" style="font-size: 11px; color: #888; margin-bottom: 12px;">Файл не выбран</div>
 
-  <button class="btn-action" id="btn-send-receipt" onclick="submitReceipt()" style="background: #28a745;">
-    🚀 Подтвердить оплату
-  </button>
-</div>
+      <button class="btn-action" id="btn-send-receipt" onclick="submitReceipt()" style="background: #28a745;">
+        🚀 Подтвердить оплату
+      </button>
+    </div>
   </div>
 
   <!-- 2. Вкладка: ПОИСК СОПЕРНИКА -->
@@ -742,9 +742,9 @@
       }
     }
 
+    /* Обработка выбора файла чека */
     function handleFileSelected(input) {
       const display = document.getElementById('file-name-display');
-      if (!display) return;
       if (input.files && input.files[0]) {
         display.textContent = "Выбран файл: " + input.files[0].name;
         display.style.color = "#28a745";
@@ -754,36 +754,23 @@
       }
     }
 
-    /* Отправка чека об оплате вместе с данными бойца в Telegram-бота */
+    /* Прямая отправка данных оплаты с файлом в Telegram бота */
     function submitReceipt() {
       const fileInput = document.getElementById('receiptFile');
-      if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        showTgAlert('Пожалуйста, прикрепите скриншот чека!');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Пожалуйста, прикрепите скриншот чека!');
         return;
       }
-
-      triggerHaptic('medium');
-
+      
       const file = fileInput.files[0];
       const reader = new FileReader();
-
+      
       reader.onload = function(e) {
         const base64Image = e.target.result;
-
-        const userCode = localStorage.getItem('rfc_pay_code') || '';
-        const fullname = localStorage.getItem('rfc_fullname') || 'Не указано';
-        const age = localStorage.getItem('rfc_age') || 'Не указан';
-        const weight = localStorage.getItem('rfc_weight') || 'Не указана';
-        const club = localStorage.getItem('rfc_club') || 'Не указан';
-
+        
+        // Данные для отправки в Telegram WebApp
         const data = {
-          type: 'receipt_submission',
           status: 'payment_proof',
-          code: userCode,
-          fullname: fullname,
-          age: age,
-          weight: weight,
-          club: club,
           image: base64Image,
           filename: file.name
         };
@@ -792,17 +779,12 @@
           window.Telegram.WebApp.sendData(JSON.stringify(data));
         } else {
           console.log("Mock send data:", data);
-          showTgAlert('Чек успешно отправлен!');
+          alert('Чек успешно отправлен!');
         }
       };
-
-      reader.onerror = function() {
-        showTgAlert('Не удалось прочитать файл. Попробуйте снова.');
-      };
-
+      
       reader.readAsDataURL(file);
     }
-
 
     function checkIsAdmin() {
       const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
