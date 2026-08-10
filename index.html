@@ -781,9 +781,12 @@ async function submitReceipt() {
   const userCode = localStorage.getItem('rfc_pay_code') || document.getElementById('user-pay-code')?.textContent || 'Не указан';
   const fullname = localStorage.getItem('rfc_fullname') || 'Не указано';
 
+  
+  let userId = '0';
   let tgUser = 'Не определен';
   if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
     const u = window.Telegram.WebApp.initDataUnsafe.user;
+    userId = u.id;
     tgUser = u.username ? `@${u.username}` : `ID: ${u.id}`;
   }
 
@@ -792,15 +795,17 @@ async function submitReceipt() {
   btn.textContent = '⏳ Отправка чека...';
 
   const caption = 
-    `💳 *НОВАЯ ОПЛАТА ЗАЯВКИ*\n\n` +
-    `👤 *ФИО:* ${fullname}\n` +
-    `🔢 *Код перевода:* \`${userCode}\`\n` +
-    `📱 *Telegram:* ${tgUser}\n` +
-    `📌 *Статус:* Ожидает проверки`;
+    `🔔 <b>Новая заявка на оплату из WebApp!</b>\n\n` +
+    `👤 <b>Участник:</b> ${fullname} (${tgUser})\n` +
+    `🔑 <b>Код перевода:</b> <code>${userCode}</code>\n` +
+    `🆔 <b>TG ID:</b> <code>${userId}</code>`;
 
   const replyMarkup = {
     inline_keyboard: [
-      [{ text: '✅ Подтвердить оплату', callback_data: `confirm_pay_${userCode}` }]
+      [
+        { text: '✅ Подтвердить', callback_data: `pay_approve:${userId}:${userCode}` },
+        { text: '❌ Отклонить', callback_data: `pay_reject:${userId}:${userCode}` }
+      ]
     ]
   };
 
@@ -808,8 +813,7 @@ async function submitReceipt() {
   formData.append('chat_id', ADMIN_CHAT_ID);
   formData.append('photo', file);
   formData.append('caption', caption);
-  formData.append('parse_mode', 'Markdown');
-  formData.append('reply_markup', JSON.stringify(replyMarkup));
+  formData.append('parse_mode', 'HTML');
 
   try {
     triggerHaptic('medium');
