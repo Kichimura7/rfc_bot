@@ -814,6 +814,7 @@ async function submitReceipt() {
   formData.append('photo', file);
   formData.append('caption', caption);
   formData.append('parse_mode', 'HTML');
+  formData.append('reply_markup', JSON.stringify(replyMarkup));
 
   try {
     triggerHaptic('medium');
