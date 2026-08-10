@@ -115,13 +115,18 @@
 
     .screen {
       display: none;
-      padding: 0 16px;
+     padding: 0 16px;
       position: relative;
       z-index: 1;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.35s ease-out, transform 0.35s ease-out;
     }
 
     .screen.active {
       display: block;
+     opacity: 1;
+     transform: translateY(0);
     }
 
     .card {
@@ -1108,60 +1113,55 @@ async function submitReceipt() {
     }
 
     function submitApplication() {
-      const fullname = document.getElementById('reg-fullname').value;
-      const club = document.getElementById('reg-club').value;
-      const age = document.getElementById('reg-age').value + ' лет';
-      const weight = document.getElementById('weight-val').textContent;
+  const fullname = document.getElementById('reg-fullname').value;
+  const club = document.getElementById('reg-club').value;
+  const age = document.getElementById('reg-age').value + ' лет';
+  const weight = document.getElementById('weight-val').textContent;
 
-      if (!fullname.trim()) {
-        showTgAlert('Пожалуйста, введите ФИО!');
-        return;
-      }
+  if (!fullname.trim()) {
+    showTgAlert('Пожалуйста, введите ФИО!');
+    return;
+  }
 
-      let telegramId = 'Не указан';
-      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-        const user = window.Telegram.WebApp.initDataUnsafe.user;
-        telegramId = user.username ? `@${user.username}` : `ID: ${user.id}`;
-      }
+  let telegramId = 'Не указан';
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    telegramId = user.username ? `@${user.username}` : `ID: ${user.id}`;
+  }
 
-      const payload = {
-        fullname: fullname,
-        club: club || 'Самостоятельно',
-        age: age,
-        weight: weight,
-        telegram_id: telegramId
-      };
+  const payload = {
+    fullname: fullname,
+    club: club || 'Самостоятельно',
+    age: age,
+    weight: weight,
+    telegram_id: telegramId
+  };
 
-      localStorage.setItem('rfc_applied', 'true');
-      localStorage.setItem('rfc_fullname', fullname);
-      localStorage.setItem('rfc_age', age);
-      localStorage.setItem('rfc_weight', weight);
-      localStorage.setItem('rfc_club', club || 'Самостоятельно');
+  // Сохраняем локальные данные
+  localStorage.setItem('rfc_applied', 'true');
+  localStorage.setItem('rfc_fullname', fullname);
+  localStorage.setItem('rfc_age', age);
+  localStorage.setItem('rfc_weight', weight);
+  localStorage.setItem('rfc_club', club || 'Самостоятельно');
 
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.error('Ошибка отправки:', err));
+  // Фоновая отправка заявки в Google Таблицу
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => console.error('Ошибка отправки:', err));
 
-      const regData = {
-        type: 'registration',
-        fullname: fullname,
-        club: club || 'Самостоятельно',
-        age: age,
-        weight: weight,
-        code: localStorage.getItem('rfc_pay_code') || ''
-      };
+  // Вибрация
+  triggerHaptic('medium');
 
-      if (window.Telegram && window.Telegram.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify(regData));
-      } else {
-        updateProfileUI();
-        triggerHaptic('medium');
-        switchTab('tab-apply');
-      }
-    }
+  // Обновляем UI профиля
+  updateProfileUI();
+
+  // Плавный переход на экран оплаты
+  switchTab('tab-apply');
+}
+
 
     function checkAdminAccess() {
       const isAdmin = checkIsAdmin();
