@@ -12,7 +12,6 @@ from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeybo
 # Загружаем переменные из .env
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8892094938:AAH7ONLdQIigBn1DGjvBxYUY92r2GMo7cxc")
-# Явно указываем ID админ-группы
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "-1004465872509"))
 
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +35,13 @@ def init_db():
             opponent_id INTEGER
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS payments (
+            user_id INTEGER PRIMARY KEY,
+            code TEXT,
+            status TEXT DEFAULT 'pending'
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -45,7 +51,6 @@ init_db()
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     web_app_url = "https://kichimura7.github.io/rfc_bot/" 
-    
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🥊 Открыть RFC League", web_app=WebAppInfo(url=web_app_url))]
@@ -54,7 +59,6 @@ async def cmd_start(message: Message):
     await message.answer("Привет! Нажми на кнопку ниже, чтобы открыть приложение и найти бой:", reply_markup=keyboard)
 
 
-# Прием фото-чека, если пользователь отправляет его напрямую в чат бота
 @dp.message(F.photo)
 async def handle_photo_receipt(message: Message):
     user_id = message.from_user.id
@@ -62,6 +66,13 @@ async def handle_photo_receipt(message: Message):
     photo_id = message.photo[-1].file_id
     user_name = message.from_user.full_name
     username = f"@{message.from_user.username}" if message.from_user.username else "нет username"
+
+    # Фиксируем статус ожидания в БД
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'pending')", (user_id, code))
+    conn.commit()
+    conn.close()
 
     caption = (
         f"🔔 <b>Новая заявка на оплату!</b>\n\n"
@@ -91,16 +102,29 @@ async def handle_photo_receipt(message: Message):
         await message.answer("⚠️ Ошибка при отправке чека администраторам.")
 
 
-# Обработка кнопок в админ-чате
 @dp.callback_query(F.data.startswith("pay_approve:"))
 async def process_approve(callback: CallbackQuery):
     _, user_id_str, code = callback.data.split(":")
     user_id = int(user_id_str)
 
+    # Обновляем статус оплаты в базе данных на confirmed
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'confirmed')", (user_id, code))
+    conn.commit()
+    conn.close()
+
+    web_app_url = "https://kichimura7.github.io/rfc_bot/?paid=true"
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🥊 Открыть RFC League", web_app=WebAppInfo(url=web_app_url))]
+    ])
+
     try:
         await bot.send_message(
             chat_id=user_id,
             text=f"🎉 <b>Оплата (код: {code}) подтверждена!</b>\nВы успешно внесены в список участников турнира RFC.",
+            reply_markup=keyboard,
             parse_mode="HTML"
         )
     except Exception as e:
@@ -119,6 +143,13 @@ async def process_approve(callback: CallbackQuery):
 async def process_reject(callback: CallbackQuery):
     _, user_id_str, code = callback.data.split(":")
     user_id = int(user_id_str)
+
+    # Обновляем статус в БД на rejected
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'rejected')", (user_id, code))
+    conn.commit()
+    conn.close()
 
     try:
         await bot.send_message(
@@ -149,7 +180,7 @@ async def handle_options(request):
     return web.Response(status=200, headers=CORS_HEADERS)
 
 
-# === API: ПРИЕМ ЧЕКА ИЗА WEB APP (POST /api/submit_receipt) ===
+# === API: ПРИЕМ ЧЕКА ИЗ WEB APP ===
 async def api_submit_receipt(request):
     try:
         reader = await request.multipart()
@@ -170,6 +201,14 @@ async def api_submit_receipt(request):
                 user_id = await field.text()
             elif field.name == 'user_name':
                 user_name = await field.text()
+
+        # Сохраняем заявку в статус pending
+        if user_id != "0":
+            conn = sqlite3.connect("database.db")
+            cursor = conn.cursor()
+            cursor.execute("INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'pending')", (int(user_id), code))
+            conn.commit()
+            conn.close()
 
         caption = (
             f"🔔 <b>Новая заявка на оплату из WebApp!</b>\n\n"
@@ -206,6 +245,27 @@ async def api_submit_receipt(request):
 
     except Exception as e:
         logging.error(f"Error in api_submit_receipt: {e}")
+        return web.json_response({"error": str(e)}, status=500, headers=CORS_HEADERS)
+
+
+# === API: ПРОВЕРКА СТАТУСА ОПЛАТЫ ===
+async def api_check_payment(request):
+    try:
+        user_id = request.query.get("user_id")
+        if not user_id:
+            return web.json_response({"error": "No user_id"}, status=400, headers=CORS_HEADERS)
+
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM payments WHERE user_id = ?", (int(user_id),))
+        row = cursor.fetchone()
+        conn.close()
+
+        status = row[0] if row else "not_found"
+        return web.json_response({"status": status, "is_paid": status == "confirmed"}, headers=CORS_HEADERS)
+
+    except Exception as e:
+        logging.error(f"Error in api_check_payment: {e}")
         return web.json_response({"error": str(e)}, status=500, headers=CORS_HEADERS)
 
 
@@ -320,13 +380,17 @@ async def main():
     app.router.add_post('/api/register', api_register)
     app.router.add_options('/api/register', handle_options)
     
-    # Статус
+    # Статус боя
     app.router.add_get('/api/status', api_status)
     app.router.add_options('/api/status', handle_options)
 
-    # Прием оплаты из WebApp
+    # Оплата
     app.router.add_post('/api/submit_receipt', api_submit_receipt)
     app.router.add_options('/api/submit_receipt', handle_options)
+    
+    # Проверка оплаты
+    app.router.add_get('/api/check_payment', api_check_payment)
+    app.router.add_options('/api/check_payment', handle_options)
 
     runner = web.AppRunner(app)
     await runner.setup()
