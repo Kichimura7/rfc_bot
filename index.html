@@ -783,7 +783,7 @@
       }
     }
 
-    const BOT_TOKEN = '8892094938:AAH7ONLdQIigBn1DGjvBxYUY92r2GMo7cxc';
+    const BOT_TOKEN = '8892094938:AAFoUDEreJacWNQiGPps_5NyyI2K8QILJAg';
     const ADMIN_CHAT_ID = '-1004465872509'; // ID закрытой группы админов
 
 async function submitReceipt() {
@@ -1429,26 +1429,28 @@ async function submitReceipt() {
     });
 
 
-    async function checkPaymentStatus() {
+   async function checkPaymentStatus() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('paid') === 'true') {
     localStorage.setItem('rfc_paid', 'true');
   }
 
+  let isPaid = localStorage.getItem('rfc_paid') === 'true';
+
+  // Получаем актуальный ID
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
   const tgId = tgUser?.id;
 
-  // Если локально уже сохранено "оплачено" — меняем UI сразу
-  let isPaid = localStorage.getItem('rfc_paid') === 'true';
-
-  // Если в локальном хранилище еще нет информации — запрашиваем сервер VPS (порт 8080)
   if (!isPaid && tgId) {
     try {
-      const response = await fetch(`http://138.124.14.138:8080/api/check_payment?user_id=${tgId}`);
-      const data = await response.json();
-      if (data.is_paid || data.status === 'confirmed') {
-        isPaid = true;
-        localStorage.setItem('rfc_paid', 'true');
+      // Использовать HTTPS адрес сервера (настройте SSL на сервере)
+      const response = await fetch(`https://138.124.14.138:8080/api/check_payment?user_id=${tgId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.is_paid || data.status === 'confirmed') {
+          isPaid = true;
+          localStorage.setItem('rfc_paid', 'true');
+        }
       }
     } catch (e) {
       console.error('Ошибка проверки статуса с сервера:', e);
@@ -1462,7 +1464,7 @@ async function submitReceipt() {
     approvedBox.classList.remove('hidden');
     pendingBox.classList.add('hidden');
 
-    const fullName = localStorage.getItem('rfc_fullname') || 'Участник';
+    const fullName = localStorage.getItem('rfc_fullname') || (tgUser ? tgUser.first_name : 'Участник');
     const code = localStorage.getItem('rfc_pay_code') || '-';
 
     const fnEl = document.getElementById('app-user-fullname');
@@ -1473,10 +1475,18 @@ async function submitReceipt() {
   }
 }
 
-    // И вызов функции при загрузке:
-    document.addEventListener('DOMContentLoaded', () => {
-      checkPaymentStatus();
-    });
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+  if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+  }
+
+  // Запуск проверки только после полной загрузки tg.ready()
+  checkPaymentStatus();
+});
   
   </script>
 </body>

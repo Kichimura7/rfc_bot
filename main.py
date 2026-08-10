@@ -11,7 +11,7 @@ from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeybo
 
 # Загружаем переменные из .env
 load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8892094938:AAH7ONLdQIigBn1DGjvBxYUY92r2GMo7cxc")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "-1004465872509"))
 
 logging.basicConfig(level=logging.INFO)
