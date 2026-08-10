@@ -1429,33 +1429,49 @@ async function submitReceipt() {
     });
 
 
-    // ... ваши существующие функции (switchTab, submitReceipt и т.д.) ...
+    async function checkPaymentStatus() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('paid') === 'true') {
+    localStorage.setItem('rfc_paid', 'true');
+  }
 
-    // Добавляете функцию сюда:
-    function checkPaymentStatus() {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('paid') === 'true') {
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const tgId = tgUser?.id;
+
+  // Если локально уже сохранено "оплачено" — меняем UI сразу
+  let isPaid = localStorage.getItem('rfc_paid') === 'true';
+
+  // Если в локальном хранилище еще нет информации — запрашиваем сервер VPS (порт 8080)
+  if (!isPaid && tgId) {
+    try {
+      const response = await fetch(`http://138.124.14.138:8080/api/check_payment?user_id=${tgId}`);
+      const data = await response.json();
+      if (data.is_paid || data.status === 'confirmed') {
+        isPaid = true;
         localStorage.setItem('rfc_paid', 'true');
       }
-
-      const isPaid = localStorage.getItem('rfc_paid') === 'true';
-      const approvedBox = document.getElementById('pay-approved-box');
-      const pendingBox = document.getElementById('pay-pending-box');
-
-      if (isPaid && approvedBox && pendingBox) {
-        approvedBox.classList.remove('hidden');
-        pendingBox.classList.add('hidden');
-
-        const fullname = localStorage.getItem('rfc_fullname') || 'Участник';
-        const code = localStorage.getItem('rfc_pay_code') || '—';
-
-        const fnEl = document.getElementById('app-user-fullname');
-        const codeEl = document.getElementById('app-user-code');
-
-        if (fnEl) fnEl.textContent = fullname;
-        if (codeEl) codeEl.textContent = code;
-      }
+    } catch (e) {
+      console.error('Ошибка проверки статуса с сервера:', e);
     }
+  }
+
+  const approvedBox = document.getElementById('pay-approved-box');
+  const pendingBox = document.getElementById('pay-pending-box');
+
+  if (isPaid && approvedBox && pendingBox) {
+    approvedBox.classList.remove('hidden');
+    pendingBox.classList.add('hidden');
+
+    const fullName = localStorage.getItem('rfc_fullname') || 'Участник';
+    const code = localStorage.getItem('rfc_pay_code') || '-';
+
+    const fnEl = document.getElementById('app-user-fullname');
+    const codeEl = document.getElementById('app-user-code');
+
+    if (fnEl) fnEl.textContent = fullName;
+    if (codeEl) codeEl.textContent = code;
+  }
+}
 
     // И вызов функции при загрузке:
     document.addEventListener('DOMContentLoaded', () => {
