@@ -67,7 +67,6 @@ async def handle_photo_receipt(message: Message):
     user_name = message.from_user.full_name
     username = f"@{message.from_user.username}" if message.from_user.username else "нет username"
 
-    # Фиксируем статус ожидания в БД
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
     cursor.execute("INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'pending')", (user_id, code))
@@ -104,10 +103,13 @@ async def handle_photo_receipt(message: Message):
 
 @dp.callback_query(F.data.startswith("pay_approve:"))
 async def process_approve(callback: CallbackQuery):
+    # 1. Сразу снимаем статус загрузки в интерфейсе Telegram
+    await callback.answer("Заявка подтверждена ✅")
+
     _, user_id_str, code = callback.data.split(":")
     user_id = int(user_id_str)
 
-    # Обновляем статус оплаты в базе данных на confirmed
+    # Обновляем статус оплаты в базе данных
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
     cursor.execute("INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'confirmed')", (user_id, code))
@@ -115,7 +117,6 @@ async def process_approve(callback: CallbackQuery):
     conn.close()
 
     web_app_url = "https://kichimura7.github.io/rfc_bot/?paid=true"
-
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🥊 Открыть RFC League", web_app=WebAppInfo(url=web_app_url))]
     ])
@@ -131,16 +132,29 @@ async def process_approve(callback: CallbackQuery):
         logging.error(f"Failed to send approve message to user {user_id}: {e}")
 
     admin_name = f"@{callback.from_user.username}" if callback.from_user.username else callback.from_user.full_name
-    await callback.message.edit_caption(
-        caption=callback.message.caption + f"\n\n✅ <b>ПОДТВЕРЖДЕНО</b> (Админ: {admin_name})",
-        reply_markup=None,
-        parse_mode="HTML"
-    )
-    await callback.answer("Заявка подтверждена")
+    
+    # 2. Проверяем, есть ли у сообщения фото, чтобы корректно его обновить
+    if callback.message.photo:
+        old_caption = callback.message.caption or ""
+        await callback.message.edit_caption(
+            caption=f"{old_caption}\n\n✅ <b>ПОДТВЕРЖДЕНО</b> (Админ: {admin_name})",
+            reply_markup=None,
+            parse_mode="HTML"
+        )
+    else:
+        old_text = callback.message.text or ""
+        await callback.message.edit_text(
+            text=f"{old_text}\n\n✅ <b>ПОДТВЕРЖДЕНО</b> (Админ: {admin_name})",
+            reply_markup=None,
+            parse_mode="HTML"
+        )
 
 
 @dp.callback_query(F.data.startswith("pay_reject:"))
 async def process_reject(callback: CallbackQuery):
+    # 1. Сразу снимаем статус загрузки в интерфейсе Telegram
+    await callback.answer("Заявка отклонена ❌")
+
     _, user_id_str, code = callback.data.split(":")
     user_id = int(user_id_str)
 
@@ -161,12 +175,22 @@ async def process_reject(callback: CallbackQuery):
         logging.error(f"Failed to send reject message to user {user_id}: {e}")
 
     admin_name = f"@{callback.from_user.username}" if callback.from_user.username else callback.from_user.full_name
-    await callback.message.edit_caption(
-        caption=callback.message.caption + f"\n\n❌ <b>ОТКЛОНЕНО</b> (Админ: {admin_name})",
-        reply_markup=None,
-        parse_mode="HTML"
-    )
-    await callback.answer("Заявка отклонена")
+    
+    # 2. Проверяем, есть ли у сообщения фото, чтобы корректно его обновить
+    if callback.message.photo:
+        old_caption = callback.message.caption or ""
+        await callback.message.edit_caption(
+            caption=f"{old_caption}\n\n❌ <b>ОТКЛОНЕНО</b> (Админ: {admin_name})",
+            reply_markup=None,
+            parse_mode="HTML"
+        )
+    else:
+        old_text = callback.message.text or ""
+        await callback.message.edit_text(
+            text=f"{old_text}\n\n❌ <b>ОТКЛОНЕНО</b> (Админ: {admin_name})",
+            reply_markup=None,
+            parse_mode="HTML"
+        )
 
 
 # === CORS ЗАГОЛОВКИ ===
@@ -202,7 +226,6 @@ async def api_submit_receipt(request):
             elif field.name == 'user_name':
                 user_name = await field.text()
 
-        # Сохраняем заявку в статус pending
         if user_id != "0":
             conn = sqlite3.connect("database.db")
             cursor = conn.cursor()
@@ -376,19 +399,15 @@ async def api_status(request):
 async def main():
     app = web.Application()
 
-    # Регистрация и поиск
     app.router.add_post('/api/register', api_register)
     app.router.add_options('/api/register', handle_options)
     
-    # Статус боя
     app.router.add_get('/api/status', api_status)
     app.router.add_options('/api/status', handle_options)
 
-    # Оплата
     app.router.add_post('/api/submit_receipt', api_submit_receipt)
     app.router.add_options('/api/submit_receipt', handle_options)
     
-    # Проверка оплаты
     app.router.add_get('/api/check_payment', api_check_payment)
     app.router.add_options('/api/check_payment', handle_options)
 
