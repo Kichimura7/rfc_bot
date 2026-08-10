@@ -393,70 +393,94 @@
     </div>
   </div>
 
-  <!-- 1. Вкладка: ЗАЯВКА И ОПЛАТА -->
+ <!-- 1. Вкладка: ЗАЯВКА И ОПЛАТА -->
   <div id="tab-apply" class="screen">
-    <div class="card">
-      <div class="card-title">Подача заявки</div>
-      <div class="info-row">
-        <span class="info-label">Статус:</span>
-        <span class="info-val" id="pay-status" style="color: #ffaa00;">Ожидает подтверждения</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Сумма к оплате:</span>
-        <span class="info-val" style="color: #ff2a2a; font-size: 18px; font-weight: bold;">1000 ₽</span>
-      </div>
-    </div>
 
-    <!-- Инструкция по оплате -->
-    <div class="card">
-      <div class="card-title">Инструкция по оплате</div>
-      
-      <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.4;">
-        1. Переведите <b>1000 ₽</b> по номеру карты или телефона ниже.<br>
-        2. В поле <b>«Комментарий к переводу»</b> обязательно укажите ваш уникальный код:
+    <!-- Экран ПОДТВЕРЖДЕННОЙ оплаты -->
+    <div id="pay-approved-box" class="card hidden" style="border: 1px solid #28a745; background: rgba(40, 167, 69, 0.1); text-align: center; padding: 25px 15px;">
+      <div style="font-size: 50px; margin-bottom: 10px;">🎉</div>
+      <h3 style="color: #28a745; margin-bottom: 10px; font-weight: 800;">ЗАЯВКА ПОДТВЕРЖДЕНА</h3>
+      <p style="font-size: 13px; color: #fff; margin-bottom: 15px; line-height: 1.4;">
+        Вы успешно зарегистрированы и внесены в официальный список участников турнира <b>RFC</b>!
       </p>
 
-      <div class="code-badge">
-        Код: <span id="user-pay-code">7593</span>
+      <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; text-align: left; margin-bottom: 15px;">
+        <div class="info-row"><span class="info-label">Участник:</span><span class="info-val" id="app-user-fullname">—</span></div>
+        <div class="info-row"><span class="info-label">Код оплаты:</span><span class="info-val" id="app-user-code">—</span></div>
+        <div class="info-row"><span class="info-label">Статус:</span><span class="info-val" style="color: #28a745; font-weight: bold;">✅ Оплачено</span></div>
       </div>
 
-      <div class="info-row">
-        <span class="info-label">Карта / Телефон:</span>
-        <span class="info-val" style="color: #fff; font-weight: bold;">+7 939 768 58 75</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Банк:</span>
-        <span class="info-val">Сбербанк / Т-Банк</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Получатель:</span>
-        <span class="info-val">Оргкомитет RFC</span>
-      </div>
-
-      <button class="btn-action" onclick="copyPhoneToClipboard()" style="background: linear-gradient(135deg, #007aff 0%, #0040aa 100%); margin-top: 14px;">
-        📲 Скопировать реквизиты
-      </button>
-    </div>
-
-    <!-- Подтверждение оплаты -->
-    <div class="card">
-      <div class="card-title">Подтверждение оплаты</div>
-      <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
-        После перевода с указанным кодом прикрепите скриншот чека и нажмите кнопку ниже.
+      <p style="font-size: 11px; color: #8e8e93; line-height: 1.3;">
+        Следите за распределением пар во вкладке <b>«Сетка»</b> и информацией о турнире во вкладке <b>«Инфо»</b>.
       </p>
-
-      <!-- Скрытый инпут для файла и кнопка выбора -->
-      <input type="file" id="receiptFile" accept="image/*" style="display: none;" onchange="handleFileSelected(this)">
-      <button class="btn-action" onclick="document.getElementById('receiptFile').click()" style="background: #333; margin-bottom: 8px;">
-        📸 Прикрепить скриншот чека
-      </button>
-      <div id="file-name-display" style="font-size: 11px; color: #888; margin-bottom: 12px;">Файл не выбран</div>
-
-      <button class="btn-action" id="btn-send-receipt" onclick="submitReceipt()" style="background: #28a745;">
-        🚀 Подтвердить оплату
-      </button>
     </div>
+
+    <!-- Экран ОЖИДАНИЯ / ИНСТРУКЦИИ ОПЛАТЫ -->
+    <div id="pay-pending-box">
+      <div class="card">
+        <div class="card-title">Подача заявки</div>
+        <div class="info-row">
+          <span class="info-label">Статус:</span>
+          <span class="info-val" id="pay-status" style="color: #ffaa00;">Ожидает подтверждения</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Сумма к оплате:</span>
+          <span class="info-val" style="color: #ff2a2a; font-size: 18px; font-weight: bold;">1000 ₽</span>
+        </div>
+      </div>
+
+      <!-- Инструкция по оплате -->
+      <div class="card">
+        <div class="card-title">Инструкция по оплате</div>
+        
+        <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.4;">
+          1. Переведите <b>1000 ₽</b> по номеру карты или телефона ниже.<br>
+          2. В поле <b>«Комментарий к переводу»</b> обязательно укажите ваш уникальный код:
+        </p>
+
+        <div class="code-badge">
+          Код: <span id="user-pay-code">7593</span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-label">Карта / Телефон:</span>
+          <span class="info-val" style="color: #fff; font-weight: bold;">+7 939 768 58 75</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Банк:</span>
+          <span class="info-val">Сбербанк / Т-Банк</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Получатель:</span>
+          <span class="info-val">Оргкомитет RFC</span>
+        </div>
+
+        <button class="btn-action" onclick="copyPhoneToClipboard()" style="background: linear-gradient(135deg, #007aff 0%, #0040aa 100%); margin-top: 14px;">
+          📲 Скопировать реквизиты
+        </button>
+      </div>
+
+      <!-- Подтверждение оплаты -->
+      <div class="card">
+        <div class="card-title">Подтверждение оплаты</div>
+        <p style="font-size: 12px; color: #aaa; margin-bottom: 12px;">
+          После перевода с указанным кодом прикрепите скриншот чека и нажмите кнопку ниже.
+        </p>
+
+        <input type="file" id="receiptFile" accept="image/*" style="display: none;" onchange="handleFileSelected(this)">
+        <button class="btn-action" onclick="document.getElementById('receiptFile').click()" style="background: #333; margin-bottom: 8px;">
+          📸 Прикрепить скриншот чека
+        </button>
+        <div id="file-name-display" style="font-size: 11px; color: #888; margin-bottom: 12px;">Файл не выбран</div>
+
+        <button class="btn-action" id="btn-send-receipt" onclick="submitReceipt()" style="background: #28a745;">
+          🚀 Подтвердить оплату
+        </button>
+      </div>
+    </div>
+
   </div>
+ 
 
   <!-- 2. Вкладка: ПОИСК СОПЕРНИКА -->
   <div id="tab-match" class="screen">
@@ -926,6 +950,7 @@ async function submitReceipt() {
 
       if (targetId === 'tab-apply') {
         initUserCode();
+        checkPaymentStatus();
       }
 
       if (tabId === 'tab-match') {
@@ -1402,6 +1427,41 @@ async function submitReceipt() {
       loadInfoData();
       initUserCode();
     });
+
+
+    // ... ваши существующие функции (switchTab, submitReceipt и т.д.) ...
+
+    // Добавляете функцию сюда:
+    function checkPaymentStatus() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('paid') === 'true') {
+        localStorage.setItem('rfc_paid', 'true');
+      }
+
+      const isPaid = localStorage.getItem('rfc_paid') === 'true';
+      const approvedBox = document.getElementById('pay-approved-box');
+      const pendingBox = document.getElementById('pay-pending-box');
+
+      if (isPaid && approvedBox && pendingBox) {
+        approvedBox.classList.remove('hidden');
+        pendingBox.classList.add('hidden');
+
+        const fullname = localStorage.getItem('rfc_fullname') || 'Участник';
+        const code = localStorage.getItem('rfc_pay_code') || '—';
+
+        const fnEl = document.getElementById('app-user-fullname');
+        const codeEl = document.getElementById('app-user-code');
+
+        if (fnEl) fnEl.textContent = fullname;
+        if (codeEl) codeEl.textContent = code;
+      }
+    }
+
+    // И вызов функции при загрузке:
+    document.addEventListener('DOMContentLoaded', () => {
+      checkPaymentStatus();
+    });
+  
   </script>
 </body>
 </html>
