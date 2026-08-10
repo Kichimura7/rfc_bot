@@ -783,94 +783,62 @@
       }
     }
 
-    const BOT_TOKEN = '8892094938:AAFi30uzmKFUZwwEHi_M3LNaI7ob8l3sXjE';
-    const ADMIN_CHAT_ID = '-1004465872509'; // ID закрытой группы админов
 
 async function submitReceipt() {
-  const fileInput = document.getElementById('receiptFile');
-  const btn = document.getElementById('btn-send-receipt');
+    const fileInput = document.getElementById('receiptFile');
+    const btn = document.getElementById('btn-send-receipt');
 
-  if (!fileInput.files || fileInput.files.length === 0) {
-    showTgAlert('Пожалуйста, прикрепите скриншот чека!');
-    return;
-  }
-
-  const file = fileInput.files[0];
-
-  if (file.size > 10 * 1024 * 1024) {
-    showTgAlert('Файл слишком большой! Выберите скриншот до 10 МБ.');
-    return;
-  }
-
-  const userCode = localStorage.getItem('rfc_pay_code') || document.getElementById('user-pay-code')?.textContent || 'Не указан';
-  const fullname = localStorage.getItem('rfc_fullname') || 'Не указано';
-
-  
-  let userId = '0';
-  let tgUser = 'Не определен';
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-    const u = window.Telegram.WebApp.initDataUnsafe.user;
-    userId = u.id;
-    tgUser = u.username ? `@${u.username}` : `ID: ${u.id}`;
-  }
-
-  btn.disabled = true;
-  btn.style.opacity = '0.6';
-  btn.textContent = '⏳ Отправка чека...';
-
-  const caption = 
-    `🔔 <b>Новая заявка на оплату из WebApp!</b>\n\n` +
-    `👤 <b>Участник:</b> ${fullname} (${tgUser})\n` +
-    `🔑 <b>Код перевода:</b> <code>${userCode}</code>\n` +
-    `🆔 <b>TG ID:</b> <code>${userId}</code>`;
-
-  const replyMarkup = {
-    inline_keyboard: [
-      [
-        { text: '✅ Подтвердить', callback_data: `pay_approve:${userId}:${userCode}` },
-        { text: '❌ Отклонить', callback_data: `pay_reject:${userId}:${userCode}` }
-      ]
-    ]
-  };
-
-  const formData = new FormData();
-  formData.append('chat_id', ADMIN_CHAT_ID);
-  formData.append('photo', file);
-  formData.append('caption', caption);
-  formData.append('parse_mode', 'HTML');
-  formData.append('reply_markup', JSON.stringify(replyMarkup));
-
-  try {
-    triggerHaptic('medium');
-    
-    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-      method: 'POST',
-      body: formData
-    });
-
-    const result = await response.json();
-
-    if (result.ok) {
-      triggerHaptic('heavy');
-      showTgAlert('Чек успешно отправлен! Ожидайте подтверждения.');
-      
-      const statusEl = document.getElementById('pay-status');
-      if (statusEl) {
-        statusEl.textContent = 'Чек отправлен (на проверке)';
-        statusEl.style.color = '#007aff';
-      }
-    } else {
-      console.error('Ошибка Telegram API:', result);
-      showTgAlert(`Не удалось отправить: ${result.description || 'проверьте файл'}`);
+    if (!fileInput || !fileInput.files.length) {
+        showTgAlert('Пожалуйста, прикрепите скриншот чека!');
+        return;
     }
-  } catch (error) {
-    console.error('Ошибка сети:', error);
-    showTgAlert('Ошибка соединения при отправке.');
-  } finally {
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    btn.textContent = '🚀 Подтвердить оплату';
-  }
+
+    const file = fileInput.files[0];
+
+    if (file.size > 10 * 1024 * 1024) {
+        showTgAlert('Файл слишком большой! Выберите скриншот до 10 МБ.');
+        return;
+    }
+
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+    const userId = tgUser.id || '0';
+    const userName = tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Участник');
+
+    const codeInput = document.getElementById('receiptCode');
+    const code = codeInput ? codeInput.value : 'Не указан';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('code', code);
+    formData.append('user_id', userId);
+    formData.append('user_name', userName);
+
+    try {
+        triggerHaptic('medium');
+
+        const response = await fetch('http://138.124.14.138:8080/api/submit_receipt', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === 'ok') {
+            triggerHaptic('heavy');
+            showTgAlert('Чек успешно отправлен! Ожидайте подтверждения.');
+
+            const statusEl = document.getElementById('pay-status');
+            if (statusEl) {
+                statusEl.textContent = 'Чек отправлен (на проверке)';
+                statusEl.style.color = '#007aff';
+            }
+        } else {
+            showTgAlert('Ошибка при отправке чека на сервер.');
+        }
+    } catch (error) {
+        console.error('Ошибка отправки:', error);
+        showTgAlert('Ошибка соединения с сервером.');
+    }
 }
 
     function checkIsAdmin() {
