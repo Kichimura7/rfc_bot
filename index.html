@@ -1457,6 +1457,28 @@ async function submitReceipt() {
   checkPaymentStatus();
 });
   
+
+
+  async function loadRequisites() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/get_requisites`);
+    const data = await res.json();
+    if (data.phone) {
+      // Подставьте сюда ID элемента, где у вас отображается телефон (например, 'phone-display')
+      const phoneEl = document.getElementById('phone-number-display');
+      if (phoneEl) {
+        phoneEl.textContent = data.phone;
+      }
+    }
+  } catch (err) {
+    console.error('Ошибка загрузки номера:', err);
+  }
+}
+
+// Запускаем при загрузке страницы
+document.addEventListener('DOMContentLoaded', loadRequisites);
+
+
   </script>
 </body>
 </html>
