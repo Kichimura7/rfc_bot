@@ -759,18 +759,20 @@
     }
 
     function copyPhoneToClipboard() {
-      const textToCopy = "+79397685875";
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          triggerHaptic('light');
-          showTgAlert("Номер скопирован! При переводе укажите код в комментарии.");
-        }).catch(() => {
-          showTgAlert("Номер для перевода: +7 939 768 58 75");
-        });
-      } else {
-        showTgAlert("Номер для перевода: +7 939 768 58 75");
-      }
-    }
+  const phoneEl = document.getElementById('phone-number-display');
+  const textToCopy = phoneEl ? phoneEl.textContent.trim() : "";
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      triggerHaptic('light');
+      showTgAlert("Номер скопирован! При переводе укажите код в комментарии.");
+    }).catch(() => {
+      showTgAlert("Номер для перевода: " + textToCopy);
+    });
+  } else {
+    showTgAlert("Номер для перевода: " + textToCopy);
+  }
+}
 
     /* Обработка выбора файла чека */
     function handleFileSelected(input) {
