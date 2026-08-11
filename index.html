@@ -920,9 +920,10 @@ async function submitReceipt() {
       }
 
       if (targetId === 'tab-apply') {
-        initUserCode();
-        checkPaymentStatus();
-      }
+  initUserCode();
+  checkPaymentStatus();
+  loadRequisites(); // <-- Добавь эту строку
+}
 
       if (tabId === 'tab-match') {
         initMatchTabInfo();
@@ -1461,19 +1462,38 @@ async function submitReceipt() {
   
 
 
-  async function loadRequisites() {
+  // Массив номеров (такой же, как в main.py)
+const PHONE_NUMBERS = [
+  "+7 967 951 47 01", // 00:00-02:00, 06:00-08:00...
+  "+7 964 063 88 08", // 02:00-04:00, 08:00-10:00...
+  "+7 963 593 73 87"  // 04:00-06:00, 10:00-12:00...
+];
+
+// Функция расчёта номера по текущему времени устройства
+function getLocalCurrentPhone() {
+  const currentHour = new Date().getHours();
+  const index = Math.floor(currentHour / 2) % PHONE_NUMBERS.length;
+  return PHONE_NUMBERS[index];
+}
+
+async function loadRequisites() {
+  const phoneEl = document.getElementById('phone-number-display');
+  if (!phoneEl) return;
+
+  // 1. Мгновенно отображаем правильный номер по времени
+  phoneEl.textContent = getLocalCurrentPhone();
+
+  // 2. Дополнительно пробуем подтянуть с сервера
   try {
     const res = await fetch(`${API_BASE_URL}/api/get_requisites`);
-    const data = await res.json();
-    if (data.phone) {
-      // Подставьте сюда ID элемента, где у вас отображается телефон (например, 'phone-display')
-      const phoneEl = document.getElementById('phone-number-display');
-      if (phoneEl) {
+    if (res.ok) {
+      const data = await res.json();
+      if (data.phone) {
         phoneEl.textContent = data.phone;
       }
     }
   } catch (err) {
-    console.error('Ошибка загрузки номера:', err);
+    console.warn('Запрос к API не прошел, использован локальный расчет времени:', err);
   }
 }
 
