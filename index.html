@@ -341,9 +341,96 @@
       letter-spacing: 2px;
       margin: 10px 0;
     }
+
+
+    /* --- СПЛЭШ-ЭКРАН (ИНТРО) --- */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #0b0c10;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s ease;
+    }
+
+    #splash-screen.splash-fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-logo-box {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      animation: splashPulse 1.8s infinite ease-in-out;
+    }
+
+    .splash-glow {
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(255, 42, 42, 0.35) 0%, rgba(0,0,0,0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: glowPulse 2s infinite ease-in-out;
+    }
+
+    .splash-title {
+      margin-top: 24px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-transform: uppercase;
+      text-shadow: 0 0 15px rgba(255, 42, 42, 0.6);
+      animation: splashTextFade 1.2s ease-out;
+    }
+
+    .splash-sub {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #8e8e93;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    @keyframes splashTextFade {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
+  <!-- СПЛЭШ-ЭКРАН / ИНТРО -->
+  <div id="splash-screen">
+    <div class="splash-glow"></div>
+    <div class="splash-logo-box">
+      <img src="image_4.png" alt="RFC Logo" class="logo-img" />
+      <img src="image_4.png" alt="RFC Logo Shine" class="logo-shine" />
+    </div>
+    <div class="splash-title">RFC LEAGUE</div>
+    <div class="splash-sub">Официальное приложение</div>
+  </div>
 
   <div class="bg-glow"></div>
 
@@ -1352,12 +1439,24 @@ async function submitReceipt() {
       loadBracketMatches();
     }
 
+    function hideSplashScreen() {
+  const splash = document.getElementById('splash-screen');
+  if (splash && !splash.classList.contains('splash-fade-out')) {
+    splash.classList.add('splash-fade-out');
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 600);
+  }
+}
+
     document.addEventListener('DOMContentLoaded', () => {
       if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
       }
+
+      setTimeout(hideSplashScreen, 1500);
 
       const ageInput = document.getElementById('reg-age');
       const weightInput = document.getElementById('reg-weight');
