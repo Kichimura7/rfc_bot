@@ -796,106 +796,113 @@
   </div>
 
   <script>
-    const API_BASE_URL = 'https://138-124-14-138.sslip.io';
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyY5YQ82dZL7uCmEZW3icrbC_c_LF0KqSMfd67vEcZiaiGF6SAZKCI38KVG5Rcl6abypA/exec';
+  const API_BASE_URL = 'https://138-124-14-138.sslip.io';
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyY5YQ82dZL7uCmEZW3icrbC_c_LF0KqSMfd67vEcZiaiGF6SAZKCI38KVG5Rcl6abypA/exec';
 
-    const ADMIN_IDS = ["8613061969", "6709505823"]; 
+  const ADMIN_IDS = ["8613061969", "6709505823"]; 
 
-    let allApplications = [];
-    let currentWeights = [];
+  const PHONE_NUMBERS = [
+    "+7 967 951 47 01",
+    "+7 964 063 88 08",
+    "+7 963 593 73 87"
+  ];
 
-    const weightRules = [
-      { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
-      { minAge: 8, maxAge: 9, weights: ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"] },
-      { minAge: 10, maxAge: 11, weights: ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг"] },
-      { minAge: 12, maxAge: 13, weights: ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг"] },
-      { minAge: 14, maxAge: 15, weights: ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг"] },
-      { minAge: 16, maxAge: 17, weights: ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"] },
-      { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
-    ];
+  let allApplications = [];
+  let currentWeights = [];
 
-    function showTgAlert(message) {
-      try {
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.showAlert) {
-          window.Telegram.WebApp.showAlert(message);
-        } else {
-          alert(message);
-        }
-      } catch (e) {
+  const weightRules = [
+    { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
+    { minAge: 8, maxAge: 9, weights: ["26 кг", "29 кг", "32 кг", "35 кг", "+38 кг"] },
+    { minAge: 10, maxAge: 11, weights: ["29 кг", "32 кг", "36 кг", "39 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг"] },
+    { minAge: 12, maxAge: 13, weights: ["32 кг", "35 кг", "38 кг", "42 кг", "46 кг", "50 кг", "55 кг", "60 кг", "65 кг", "70 кг", "75 кг"] },
+    { minAge: 14, maxAge: 15, weights: ["40 кг", "44 кг", "48 кг", "52 кг", "56 кг", "60 кг", "65 кг", "70 кг", "75 кг", "80 кг", "85 кг"] },
+    { minAge: 16, maxAge: 17, weights: ["48 кг", "52 кг", "56 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+93 кг"] },
+    { minAge: 18, maxAge: 100, weights: ["57 кг", "61 кг", "66 кг", "70 кг", "77 кг", "84 кг", "93 кг", "+120 кг"] }
+  ];
+
+  function showTgAlert(message) {
+    try {
+      if (window.Telegram?.WebApp?.showAlert) {
+        window.Telegram.WebApp.showAlert(message);
+      } else {
         alert(message);
       }
+    } catch (e) {
+      alert(message);
     }
-
-    function triggerHaptic(type = 'medium') {
-      try {
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
-        }
-      } catch (e) {}
-    }
-
-    /* Генерация / Получение уникального кода перевода */
-    function initUserCode() {
-      let code = localStorage.getItem('rfc_pay_code');
-      if (!code) {
-        code = Math.floor(1000 + Math.random() * 9000).toString();
-        localStorage.setItem('rfc_pay_code', code);
-      }
-      const codeEl = document.getElementById('user-pay-code');
-      if (codeEl) codeEl.textContent = code;
-    }
-
-    function copyPhoneToClipboard() {
-  const phoneEl = document.getElementById('phone-number-display');
-  const textToCopy = phoneEl ? phoneEl.textContent.trim() : "";
-  
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      triggerHaptic('light');
-      showTgAlert("Номер скопирован! При переводе укажите код в комментарии.");
-    }).catch(() => {
-      showTgAlert("Номер для перевода: " + textToCopy);
-    });
-  } else {
-    showTgAlert("Номер для перевода: " + textToCopy);
   }
-}
 
-    /* Обработка выбора файла чека */
-    function handleFileSelected(input) {
-      const display = document.getElementById('file-name-display');
-      if (input.files && input.files[0]) {
-        display.textContent = "Выбран файл: " + input.files[0].name;
-        display.style.color = "#28a745";
-      } else {
-        display.textContent = "Файл не выбран";
-        display.style.color = "#888";
-      }
+  function triggerHaptic(type = 'medium') {
+    try {
+      window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(type);
+    } catch (e) {}
+  }
+
+  function checkIsAdmin() {
+    const tg = window.Telegram?.WebApp;
+    const user = tg?.initDataUnsafe?.user;
+    // БЕЗОПАСНОСТЬ: Проверка strictly по ID Telegram
+    return user && ADMIN_IDS.includes(String(user.id));
+  }
+
+  function initUserCode() {
+    let code = localStorage.getItem('rfc_pay_code');
+    if (!code) {
+      code = Math.floor(1000 + Math.random() * 9000).toString();
+      localStorage.setItem('rfc_pay_code', code);
     }
+    const codeEl = document.getElementById('user-pay-code');
+    if (codeEl) codeEl.textContent = code;
+  }
 
+  function copyPhoneToClipboard() {
+    const phoneEl = document.getElementById('phone-number-display');
+    const textToCopy = phoneEl ? phoneEl.textContent.trim() : "";
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        triggerHaptic('light');
+        showTgAlert("Номер скопирован! При переводе укажите код в комментарии.");
+      }).catch(() => {
+        showTgAlert("Номер для перевода: " + textToCopy);
+      });
+    } else {
+      showTgAlert("Номер для перевода: " + textToCopy);
+    }
+  }
 
-async function submitReceipt() {
+  function handleFileSelected(input) {
+    const display = document.getElementById('file-name-display');
+    if (input.files && input.files[0]) {
+      display.textContent = "Выбран файл: " + input.files[0].name;
+      display.style.color = "#28a745";
+    } else {
+      display.textContent = "Файл не выбран";
+      display.style.color = "#888";
+    }
+  }
+
+  async function submitReceipt() {
     const fileInput = document.getElementById('receiptFile');
-    const btn = document.getElementById('btn-send-receipt');
 
     if (!fileInput || !fileInput.files.length) {
-        showTgAlert('Пожалуйста, прикрепите скриншот чека!');
-        return;
+      showTgAlert('Пожалуйста, прикрепите скриншот чека!');
+      return;
     }
 
     const file = fileInput.files[0];
-
     if (file.size > 10 * 1024 * 1024) {
-        showTgAlert('Файл слишком большой! Выберите скриншот до 10 МБ.');
-        return;
+      showTgAlert('Файл слишком большой! Выберите скриншот до 10 МБ.');
+      return;
     }
 
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
     const userId = tgUser.id || '0';
     const userName = tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Участник');
 
-    const codeInput = document.getElementById('receiptCode');
-    const code = codeInput ? codeInput.value : 'Не указан';
+    // ИСПРАВЛЕНИЕ: Берем актуальный код оплаты из DOM
+    const codeEl = document.getElementById('user-pay-code');
+    const code = codeEl ? codeEl.textContent.trim() : 'Не указан';
 
     const formData = new FormData();
     formData.append('file', file);
@@ -904,702 +911,454 @@ async function submitReceipt() {
     formData.append('user_name', userName);
 
     try {
-        triggerHaptic('medium');
+      triggerHaptic('medium');
+      const response = await fetch(`${API_BASE_URL}/api/submit_receipt`, {
+        method: 'POST',
+        body: formData
+      });
 
-        const response = await fetch(`${API_BASE_URL}/api/submit_receipt`, {
-            method: 'POST',
-            body: formData
-        });
+      const result = await response.json();
 
-        const result = await response.json();
-
-        if (response.ok && result.status === 'ok') {
-            triggerHaptic('heavy');
-            showTgAlert('Чек успешно отправлен! Ожидайте подтверждения.');
-
-            const statusEl = document.getElementById('pay-status');
-            if (statusEl) {
-                statusEl.textContent = 'Чек отправлен (на проверке)';
-                statusEl.style.color = '#007aff';
-            }
-        } else {
-            showTgAlert('Ошибка при отправке чека на сервер.');
+      if (response.ok && result.status === 'ok') {
+        triggerHaptic('heavy');
+        showTgAlert('Чек успешно отправлен! Ожидайте подтверждения.');
+        const statusEl = document.getElementById('pay-status');
+        if (statusEl) {
+          statusEl.textContent = 'Чек отправлен (на проверке)';
+          statusEl.style.color = '#007aff';
         }
+      } else {
+        showTgAlert('Ошибка при отправке чека на сервер.');
+      }
     } catch (error) {
-        console.error('Ошибка отправки:', error);
-        showTgAlert('Ошибка соединения с сервером.');
+      console.error('Ошибка отправки:', error);
+      showTgAlert('Ошибка соединения с сервером.');
     }
-}
-
-    function checkIsAdmin() {
-      const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-      const user = (tg && tg.initDataUnsafe) ? tg.initDataUnsafe.user : null;
-      
-      if (user && ADMIN_IDS.includes(String(user.id))) {
-        return true;
-      }
-
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('admin') === 'true';
-    }
-
-    function updateWeightDisplay() {
-      const weightInput = document.getElementById('reg-weight');
-      const weightLabel = document.getElementById('weight-val');
-      if (!weightInput || !weightLabel || !currentWeights.length) return;
-      
-      let idx = parseInt(weightInput.value) || 0;
-      if (idx >= currentWeights.length) idx = currentWeights.length - 1;
-      
-      weightLabel.textContent = currentWeights[idx];
-    }
-
-    function updateWeightOptions() {
-      const ageInput = document.getElementById('reg-age');
-      const ageLabel = document.getElementById('age-val');
-      const weightInput = document.getElementById('reg-weight');
-      
-      if (!ageInput || !ageLabel || !weightInput) return;
-
-      const age = parseInt(ageInput.value);
-      ageLabel.textContent = age;
-
-      const group = weightRules.find(g => age >= g.minAge && age <= g.maxAge) || weightRules[weightRules.length - 1];
-      currentWeights = group.weights;
-
-      weightInput.min = 0;
-      weightInput.max = currentWeights.length - 1;
-
-      if (parseInt(weightInput.value) >= currentWeights.length) {
-        weightInput.value = 0;
-      }
-
-      updateWeightDisplay();
-    }
-
-    function switchTab(tabId, element) {
-      document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-        screen.style.display = 'none';
-      });
-
-      let targetId = tabId;
-      if (tabId === 'tab-apply') {
-        const isApplied = localStorage.getItem('rfc_applied');
-        targetId = (isApplied === 'true') ? 'tab-apply' : 'screen-application';
-      }
-
-      const targetScreen = document.getElementById(targetId);
-      if (targetScreen) {
-        targetScreen.classList.add('active');
-        targetScreen.style.display = 'block';
-      }
-
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      
-      if (element) {
-        element.classList.add('active');
-      } else {
-        const navEl = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
-        if (navEl) navEl.classList.add('active');
-      }
-
-      if (targetId === 'tab-apply') {
-  initUserCode();
-  checkPaymentStatus();
-  loadRequisites(); // <-- Добавь эту строку
-}
-
-      if (tabId === 'tab-match') {
-        initMatchTabInfo();
-      }
-
-      if (tabId === 'tab-admin') {
-        loadAdminApplications();
-        initAdminInfoForm();
-      }
-
-      if (tabId === 'tab-info') {
-        loadInfoData();
-      }
-
-      if (tabId === 'tab-bracket') {
-        loadBracketMatches();
-      }
-    }
-
-    /* ФУНКЦИИ УПРАВЛЕНИЯ РАЗДЕЛОМ «ИНФО» */
-    function loadInfoData() {
-      const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
-
-      const loc = document.getElementById('info-location');
-      const weighin = document.getElementById('info-weighin');
-      const fights = document.getElementById('info-fights');
-      const maincard = document.getElementById('info-maincard');
-      const rules = document.getElementById('info-rules');
-
-      if (loc && infoData.location) loc.textContent = infoData.location;
-      if (weighin && infoData.weighin) weighin.textContent = infoData.weighin;
-      if (fights && infoData.fights) fights.textContent = infoData.fights;
-      if (maincard && infoData.maincard) maincard.textContent = infoData.maincard;
-      if (rules && infoData.rules) rules.textContent = infoData.rules;
-    }
-
-    function initAdminInfoForm() {
-      const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
-
-      const locInput = document.getElementById('admin-info-location');
-      const weighinInput = document.getElementById('admin-info-weighin');
-      const fightsInput = document.getElementById('admin-info-fights');
-      const maincardInput = document.getElementById('admin-info-maincard');
-      const rulesInput = document.getElementById('admin-info-rules');
-
-      const currentLoc = document.getElementById('info-location');
-      const currentWeighin = document.getElementById('info-weighin');
-      const currentFights = document.getElementById('info-fights');
-      const currentMaincard = document.getElementById('info-maincard');
-      const currentRules = document.getElementById('info-rules');
-
-      if (locInput) locInput.value = infoData.location || (currentLoc ? currentLoc.textContent : '');
-      if (weighinInput) weighinInput.value = infoData.weighin || (currentWeighin ? currentWeighin.textContent : '');
-      if (fightsInput) fightsInput.value = infoData.fights || (currentFights ? currentFights.textContent : '');
-      if (maincardInput) maincardInput.value = infoData.maincard || (currentMaincard ? currentMaincard.textContent : '');
-      if (rulesInput) rulesInput.value = infoData.rules || (currentRules ? currentRules.textContent.trim() : '');
-    }
-
-    function saveInfoData() {
-      const infoData = {
-        location: document.getElementById('admin-info-location').value.trim(),
-        weighin: document.getElementById('admin-info-weighin').value.trim(),
-        fights: document.getElementById('admin-info-fights').value.trim(),
-        maincard: document.getElementById('admin-info-maincard').value.trim(),
-        rules: document.getElementById('admin-info-rules').value.trim()
-      };
-
-      localStorage.setItem('rfc_info_data', JSON.stringify(infoData));
-      triggerHaptic('medium');
-      showTgAlert('Раздел «Инфо» успешно обновлен!');
-      loadInfoData();
-    }
-
-    function updateProfileUI() {
-      const fullname = localStorage.getItem('rfc_fullname');
-      const age = localStorage.getItem('rfc_age');
-      const weight = localStorage.getItem('rfc_weight');
-      const club = localStorage.getItem('rfc_club');
-
-      if (fullname && document.getElementById('prof-fullname')) document.getElementById('prof-fullname').textContent = fullname;
-      if (age && document.getElementById('prof-age')) document.getElementById('prof-age').textContent = age;
-      if (weight && document.getElementById('prof-weight')) document.getElementById('prof-weight').textContent = weight;
-      if (club && document.getElementById('prof-club')) document.getElementById('prof-club').textContent = club;
-      
-      initMatchTabInfo();
-    }
-
-    function initMatchTabInfo() {
-      const userWeight = localStorage.getItem('rfc_weight') || 'Не указан';
-      const userAge = localStorage.getItem('rfc_age') || '';
-      const displayEl = document.getElementById('match-user-weight');
-      
-      if (displayEl) {
-        displayEl.textContent = userAge ? `${userWeight} (${userAge})` : userWeight;
-      }
-    }
-
-    /* ФУНКЦИИ ПОИСКА СОПЕРНИКА */
-    function startOpponentSearch() {
-      triggerHaptic('medium');
-
-      const animBox = document.getElementById('search-animation-box');
-      const listContainer = document.getElementById('opponents-list');
-      const btn = document.getElementById('btn-start-search');
-
-      if (!animBox || !listContainer) return;
-
-      animBox.classList.remove('hidden');
-      if (btn) btn.disabled = true;
-
-      listContainer.innerHTML = '<p style="color: #8e8e93; text-align: center; font-size: 13px;">Идет сканирование реестра...</p>';
-
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(response => {
-          if (response.result === 'success') {
-            const myName = (localStorage.getItem('rfc_fullname') || '').toLowerCase().trim();
-            const myWeight = (localStorage.getItem('rfc_weight') || '').trim();
-
-            const candidates = (response.data || []).filter(app => {
-              const appName = (app.fullname || '').toLowerCase().trim();
-              const isNotMe = myName ? appName !== myName : true;
-              const matchesWeight = app.weight === myWeight;
-              return isNotMe && matchesWeight;
-            });
-
-            setTimeout(() => {
-              animBox.classList.add('hidden');
-              if (btn) btn.disabled = false;
-              renderOpponents(candidates);
-            }, 1200);
-
-          } else {
-            animBox.classList.add('hidden');
-            if (btn) btn.disabled = false;
-            listContainer.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки базы</p>';
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          animBox.classList.add('hidden');
-          if (btn) btn.disabled = false;
-          listContainer.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка подключения к серверу</p>';
-        });
-    }
-
-    function renderOpponents(opponents) {
-      const container = document.getElementById('opponents-list');
-      if (!container) return;
-
-      if (!opponents || opponents.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 15px 0;">
-            <p style="color: #ffaa00; font-size: 14px; font-weight: bold;">Соперников пока нет</p>
-            <p style="color: #8e8e93; font-size: 12px; margin-top: 4px;">В вашей весовой категории еще никто не зарегистрировался.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = opponents.map(op => `
-        <div class="info-row" style="align-items: center; padding: 10px 0;">
-          <div style="text-align: left;">
-            <div style="font-weight: bold; color: #fff;">${op.fullname || 'Анонимный боец'}</div>
-            <div style="font-size: 11px; color: #8e8e93;">Клуб: ${op.club || 'Самостоятельно'} | ${op.age || ''}</div>
-          </div>
-          <button onclick="sendChallenge('${(op.fullname || 'Боец').replace(/'/g, "\\'")}')" style="background: #ff2a2a; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
-            Вызвать
-          </button>
-        </div>
-      `).join('');
-    }
-
-    function sendChallenge(name) {
-      triggerHaptic('heavy');
-
-      const myName = localStorage.getItem('rfc_fullname') || 'Боец';
-      const data = {
-        type: 'challenge',
-        target_name: name,
-        from_name: myName
-      };
-
-      if (window.Telegram && window.Telegram.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify(data));
-      } else {
-        showTgAlert(`Вызов отправлен бойцу ${name}! Ожидайте подтверждения от организаторов.`);
-      }
-    }
-
-    function submitApplication() {
-  const fullname = document.getElementById('reg-fullname').value;
-  const club = document.getElementById('reg-club').value;
-  const age = document.getElementById('reg-age').value + ' лет';
-  const weight = document.getElementById('weight-val').textContent;
-
-  if (!fullname.trim()) {
-    showTgAlert('Пожалуйста, введите ФИО!');
-    return;
   }
 
-  let telegramId = 'Не указан';
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    telegramId = user.username ? `@${user.username}` : `ID: ${user.id}`;
+  function updateWeightDisplay() {
+    const weightInput = document.getElementById('reg-weight');
+    const weightLabel = document.getElementById('weight-val');
+    if (!weightInput || !weightLabel || !currentWeights.length) return;
+    
+    let idx = parseInt(weightInput.value) || 0;
+    if (idx >= currentWeights.length) idx = currentWeights.length - 1;
+    weightLabel.textContent = currentWeights[idx];
   }
 
-  const payload = {
-    fullname: fullname,
-    club: club || 'Самостоятельно',
-    age: age,
-    weight: weight,
-    telegram_id: telegramId
-  };
+  function updateWeightOptions() {
+    const ageInput = document.getElementById('reg-age');
+    const ageLabel = document.getElementById('age-val');
+    const weightInput = document.getElementById('reg-weight');
+    
+    if (!ageInput || !ageLabel || !weightInput) return;
 
-  // Сохраняем локальные данные
-  localStorage.setItem('rfc_applied', 'true');
-  localStorage.setItem('rfc_fullname', fullname);
-  localStorage.setItem('rfc_age', age);
-  localStorage.setItem('rfc_weight', weight);
-  localStorage.setItem('rfc_club', club || 'Самостоятельно');
+    const age = parseInt(ageInput.value);
+    ageLabel.textContent = age;
 
-  // Фоновая отправка заявки в Google Таблицу
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(err => console.error('Ошибка отправки:', err));
+    const group = weightRules.find(g => age >= g.minAge && age <= g.maxAge) || weightRules[weightRules.length - 1];
+    currentWeights = group.weights;
 
-  // Вибрация
-  triggerHaptic('medium');
+    weightInput.min = 0;
+    weightInput.max = currentWeights.length - 1;
 
-  // Обновляем UI профиля
-  updateProfileUI();
-
-  // Плавный переход на экран оплаты
-  switchTab('tab-apply');
-}
-
-
-    function checkAdminAccess() {
-      const isAdmin = checkIsAdmin();
-      const adminNav = document.getElementById('nav-admin');
-      if (adminNav) {
-        if (isAdmin) {
-          adminNav.classList.remove('hidden');
-          adminNav.style.display = 'flex';
-        } else {
-          adminNav.classList.add('hidden');
-          adminNav.style.display = 'none';
-        }
-      }
+    if (parseInt(weightInput.value) >= currentWeights.length) {
+      weightInput.value = 0;
     }
 
-    function loadAdminApplications() {
-      const container = document.getElementById('admin-apps-list');
-      const icon = document.getElementById('refresh-icon');
-      const btn = document.getElementById('btn-refresh-admin');
-      if (!container) return;
-
-      if (icon) icon.classList.add('spinning');
-      if (btn) btn.style.opacity = '0.7';
-
-      triggerHaptic('light');
-
-      container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Загрузка данных...</p>';
-
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(response => {
-          if (response.result === 'success') {
-            allApplications = response.data || [];
-            const countEl = document.getElementById('total-apps-count');
-            if (countEl) countEl.textContent = allApplications.length;
-            renderAdminApps(allApplications);
-          } else {
-            container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
-        })
-        .finally(() => {
-          if (icon) icon.classList.remove('spinning');
-          if (btn) btn.style.opacity = '1';
-        });
-    }
-
-    function renderAdminApps(apps) {
-      const container = document.getElementById('admin-apps-list');
-      if (!container) return;
-
-      if (!apps || apps.length === 0) {
-        container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Заявок пока нет</p>';
-        return;
-      }
-
-      container.innerHTML = apps.map(app => `
-        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: left;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <strong style="color:#fff;">${app.fullname || 'Без имени'}</strong>
-            <span style="background: #ff3b30; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">${app.weight || '-'}</span>
-          </div>
-          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Клуб:</strong> ${app.club || '-'}</p>
-          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Возраст:</strong> ${app.age || '-'}</p>
-          <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Контакты:</strong> ${app.telegram_id || '-'}</p>
-          <p style="font-size: 11px; color: #8e8e93; margin-top: 6px;">${app.timestamp || ''}</p>
-          
-          <button onclick="deleteApplication(${app.row})" style="margin-top: 8px; background: rgba(255, 59, 48, 0.2); color: #ff3b30; border: 1px solid #ff3b30; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;">
-            🗑️ Удалить заявку
-          </button>
-        </div>
-      `).join('');
-    }
-
-    function deleteApplication(rowIndex) {
-      if (!confirm("Вы действительно хотите удалить эту заявку?")) return;
-
-      const deleteUrl = `${SCRIPT_URL}?action=delete&row=${rowIndex}`;
-
-      fetch(deleteUrl)
-        .then(res => res.json())
-        .then(response => {
-          if (response.result === 'success') {
-            showTgAlert('Заявка успешно удалена!');
-            loadAdminApplications();
-          } else {
-            showTgAlert('Ошибка при удалении');
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          setTimeout(() => {
-            loadAdminApplications();
-          }, 1000);
-        });
-    }
-
-    function filterAdminApps() {
-      const searchInput = document.getElementById('admin-search');
-      if (!searchInput) return;
-      const query = searchInput.value.toLowerCase();
-      const filtered = allApplications.filter(app => 
-        (app.fullname && app.fullname.toLowerCase().includes(query)) ||
-        (app.club && app.club.toLowerCase().includes(query))
-      );
-      renderAdminApps(filtered);
-    }
-
-    /* ФУНКЦИИ СЕТКИ БОЁВ */
-    function loadBracketMatches() {
-      const container = document.getElementById('bracket-matches-list');
-      if (!container) return;
-
-      const savedMatches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
-
-      if (savedMatches.length === 0) {
-        container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Пар пока нет. Админ формирует сетку.</p>';
-        return;
-      }
-
-      const isAdmin = checkIsAdmin();
-
-      container.innerHTML = savedMatches.map((m, index) => `
-        <div class="match-card">
-          <div class="match-header">
-            <span>Бой №${index + 1}</span>
-            <span style="color: #ff2a2a; font-weight: bold;">
-              ${m.category || 'Весовая не указана'}${m.age ? ' (' + m.age + ')' : ''}
-            </span>
-          </div>
-          <div class="match-fighters">
-            <div class="fighter-box fighter-red">
-              <div class="fighter-name">${m.f1}</div>
-              <div class="fighter-club">Красный угол</div>
-            </div>
-            <div class="vs-badge">VS</div>
-            <div class="fighter-box fighter-blue">
-              <div class="fighter-name">${m.f2}</div>
-              <div class="fighter-club">Синий угол</div>
-            </div>
-          </div>
-          ${isAdmin ? `
-            <button onclick="deleteMatchPair(${index})" style="margin-top: 10px; background: rgba(255, 59, 48, 0.15); color: #ff3b30; border: 1px solid #ff3b30; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;">
-              🗑️ Удалить бой
-            </button>
-          ` : ''}
-        </div>
-      `).join('');
-    }
-
-    function addMatchPair() {
-      const f1 = document.getElementById('pair-fighter1').value.trim();
-      const f2 = document.getElementById('pair-fighter2').value.trim();
-      const cat = document.getElementById('pair-category').value.trim();
-      const age = document.getElementById('pair-age').value.trim();
-
-      if (!f1 || !f2) {
-        showTgAlert('Заполните ФИО обоих бойцов!');
-        return;
-      }
-
-      const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
-      matches.push({ f1, f2, category: cat, age: age });
-      localStorage.setItem('rfc_matches', JSON.stringify(matches));
-
-      document.getElementById('pair-fighter1').value = '';
-      document.getElementById('pair-fighter2').value = '';
-      document.getElementById('pair-category').value = '';
-      document.getElementById('pair-age').value = '';
-
-      showTgAlert('Пара успешно добавлена в сетку!');
-      loadBracketMatches();
-    }
-
-    function deleteMatchPair(index) {
-      if (!confirm("Вы действительно хотите удалить этот бой из сетки?")) return;
-
-      const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
-      matches.splice(index, 1);
-      localStorage.setItem('rfc_matches', JSON.stringify(matches));
-
-      triggerHaptic('medium');
-      loadBracketMatches();
-    }
-
-    function hideSplashScreen() {
-  const splash = document.getElementById('splash-screen');
-  if (splash && !splash.classList.contains('splash-fade-out')) {
-    splash.classList.add('splash-fade-out');
-    setTimeout(() => {
-      splash.style.display = 'none';
-    }, 600);
+    updateWeightDisplay();
   }
-}
 
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-      }
-
-      setTimeout(hideSplashScreen, 1500);
-
-      const ageInput = document.getElementById('reg-age');
-      const weightInput = document.getElementById('reg-weight');
-      const submitBtn = document.getElementById('btn-submit');
-      const resetBtn = document.getElementById('btn-reset');
-
-      if (ageInput) ageInput.addEventListener('input', updateWeightOptions);
-      if (weightInput) weightInput.addEventListener('input', updateWeightDisplay);
-      if (submitBtn) submitBtn.addEventListener('click', submitApplication);
-      
-      if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-          const savedMatches = localStorage.getItem('rfc_matches');
-          const savedInfo = localStorage.getItem('rfc_info_data');
-          localStorage.clear();
-          if (savedMatches) {
-            localStorage.setItem('rfc_matches', savedMatches);
-          }
-          if (savedInfo) {
-            localStorage.setItem('rfc_info_data', savedInfo);
-          }
-          location.reload();
-        });
-      }
-
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function() {
-          const tabId = this.getAttribute('data-tab');
-          switchTab(tabId, this);
-        });
-      });
-
-      updateWeightOptions();
-
-      switchTab('tab-apply');
-      updateProfileUI();
-      checkAdminAccess();
-      loadBracketMatches();
-      loadInfoData();
-      initUserCode();
+  function switchTab(tabId, element) {
+    document.querySelectorAll('.screen').forEach(screen => {
+      screen.classList.remove('active');
+      screen.style.display = 'none';
     });
 
+    let targetId = tabId;
+    if (tabId === 'tab-apply') {
+      const isApplied = localStorage.getItem('rfc_applied');
+      targetId = (isApplied === 'true') ? 'tab-apply' : 'screen-application';
+    }
 
-   async function checkPaymentStatus() {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('paid') === 'true') {
-    localStorage.setItem('rfc_paid', 'true');
+    const targetScreen = document.getElementById(targetId);
+    if (targetScreen) {
+      targetScreen.classList.add('active');
+      targetScreen.style.display = 'block';
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    
+    if (element) {
+      element.classList.add('active');
+    } else {
+      const navEl = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+      if (navEl) navEl.classList.add('active');
+    }
+
+    if (targetId === 'tab-apply') {
+      initUserCode();
+      checkPaymentStatus();
+      loadRequisites();
+    }
+
+    if (tabId === 'tab-match') initMatchTabInfo();
+    if (tabId === 'tab-admin') {
+      loadAdminApplications();
+      initAdminInfoForm();
+    }
+    if (tabId === 'tab-info') loadInfoData();
+    if (tabId === 'tab-bracket') loadBracketMatches();
   }
 
-  let isPaid = localStorage.getItem('rfc_paid') === 'true';
+  function loadInfoData() {
+    const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
+    if (infoData.location) document.getElementById('info-location').textContent = infoData.location;
+    if (infoData.weighin) document.getElementById('info-weighin').textContent = infoData.weighin;
+    if (infoData.fights) document.getElementById('info-fights').textContent = infoData.fights;
+    if (infoData.maincard) document.getElementById('info-maincard').textContent = infoData.maincard;
+    if (infoData.rules) document.getElementById('info-rules').textContent = infoData.rules;
+  }
 
-  // Получаем актуальный ID
-  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  const tgId = tgUser?.id;
+  function initAdminInfoForm() {
+    const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
+    document.getElementById('admin-info-location').value = infoData.location || '';
+    document.getElementById('admin-info-weighin').value = infoData.weighin || '';
+    document.getElementById('admin-info-fights').value = infoData.fights || '';
+    document.getElementById('admin-info-maincard').value = infoData.maincard || '';
+    document.getElementById('admin-info-rules').value = infoData.rules || '';
+  }
 
-  if (!isPaid && tgId) {
-    try {
-      // Использовать HTTPS адрес сервера (настройте SSL на сервере)
-      const response = await fetch(`${API_BASE_URL}/api/check_payment?user_id=${tgId}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.is_paid || data.status === 'confirmed') {
-          isPaid = true;
-          localStorage.setItem('rfc_paid', 'true');
+  function saveInfoData() {
+    const infoData = {
+      location: document.getElementById('admin-info-location').value.trim(),
+      weighin: document.getElementById('admin-info-weighin').value.trim(),
+      fights: document.getElementById('admin-info-fights').value.trim(),
+      maincard: document.getElementById('admin-info-maincard').value.trim(),
+      rules: document.getElementById('admin-info-rules').value.trim()
+    };
+    localStorage.setItem('rfc_info_data', JSON.stringify(infoData));
+    triggerHaptic('medium');
+    showTgAlert('Раздел «Инфо» успешно обновлен!');
+    loadInfoData();
+  }
+
+  function updateProfileUI() {
+    const fullname = localStorage.getItem('rfc_fullname');
+    const age = localStorage.getItem('rfc_age');
+    const weight = localStorage.getItem('rfc_weight');
+    const club = localStorage.getItem('rfc_club');
+
+    if (fullname) document.getElementById('prof-fullname').textContent = fullname;
+    if (age) document.getElementById('prof-age').textContent = age;
+    if (weight) document.getElementById('prof-weight').textContent = weight;
+    if (club) document.getElementById('prof-club').textContent = club;
+    
+    initMatchTabInfo();
+  }
+
+  function initMatchTabInfo() {
+    const userWeight = localStorage.getItem('rfc_weight') || 'Не указан';
+    const userAge = localStorage.getItem('rfc_age') || '';
+    const displayEl = document.getElementById('match-user-weight');
+    if (displayEl) {
+      displayEl.textContent = userAge ? `${userWeight} (${userAge})` : userWeight;
+    }
+  }
+
+  function submitApplication() {
+    const fullname = document.getElementById('reg-fullname').value;
+    const club = document.getElementById('reg-club').value;
+    const age = document.getElementById('reg-age').value + ' лет';
+    const weight = document.getElementById('weight-val').textContent;
+
+    if (!fullname.trim()) {
+      showTgAlert('Пожалуйста, введите ФИО!');
+      return;
+    }
+
+    let telegramId = 'Не указан';
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      const user = window.Telegram.WebApp.initDataUnsafe.user;
+      telegramId = user.username ? `@${user.username}` : `ID: ${user.id}`;
+    }
+
+    const payload = {
+      fullname: fullname,
+      club: club || 'Самостоятельно',
+      age: age,
+      weight: weight,
+      telegram_id: telegramId
+    };
+
+    localStorage.setItem('rfc_applied', 'true');
+    localStorage.setItem('rfc_fullname', fullname);
+    localStorage.setItem('rfc_age', age);
+    localStorage.setItem('rfc_weight', weight);
+    localStorage.setItem('rfc_club', club || 'Самостоятельно');
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(err => console.error('Ошибка отправки:', err));
+
+    triggerHaptic('medium');
+    updateProfileUI();
+    switchTab('tab-apply');
+  }
+
+  function checkAdminAccess() {
+    const isAdmin = checkIsAdmin();
+    const adminNav = document.getElementById('nav-admin');
+    if (adminNav) {
+      adminNav.style.display = isAdmin ? 'flex' : 'none';
+      if (isAdmin) adminNav.classList.remove('hidden');
+    }
+  }
+
+  function loadAdminApplications() {
+    const container = document.getElementById('admin-apps-list');
+    const icon = document.getElementById('refresh-icon');
+    const btn = document.getElementById('btn-refresh-admin');
+    if (!container) return;
+
+    if (icon) icon.classList.add('spinning');
+    if (btn) btn.style.opacity = '0.7';
+
+    triggerHaptic('light');
+
+    fetch(SCRIPT_URL)
+      .then(res => res.json())
+      .then(response => {
+        if (response.result === 'success') {
+          allApplications = response.data || [];
+          document.getElementById('total-apps-count').textContent = allApplications.length;
+          renderAdminApps(allApplications);
+        } else {
+          container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка загрузки</p>';
         }
-      }
-    } catch (e) {
-      console.error('Ошибка проверки статуса с сервера:', e);
+      })
+      .catch(err => {
+        console.error(err);
+        container.innerHTML = '<p style="color: #ff3b30; text-align: center;">Ошибка соединения</p>';
+      })
+      .finally(() => {
+        if (icon) icon.classList.remove('spinning');
+        if (btn) btn.style.opacity = '1';
+      });
+  }
+
+  function renderAdminApps(apps) {
+    const container = document.getElementById('admin-apps-list');
+    if (!container) return;
+
+    if (!apps || apps.length === 0) {
+      container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Заявок пока нет</p>';
+      return;
+    }
+
+    container.innerHTML = apps.map(app => `
+      <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <strong style="color:#fff;">${app.fullname || 'Без имени'}</strong>
+          <span style="background: #ff3b30; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold;">${app.weight || '-'}</span>
+        </div>
+        <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Клуб:</strong> ${app.club || '-'}</p>
+        <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Возраст:</strong> ${app.age || '-'}</p>
+        <p style="font-size: 13px; color: #ccc; margin: 2px 0;"><strong>Контакты:</strong> ${app.telegram_id || '-'}</p>
+        <button onclick="deleteApplication(${app.row})" style="margin-top: 8px; background: rgba(255, 59, 48, 0.2); color: #ff3b30; border: 1px solid #ff3b30; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;">
+          🗑️ Удалить заявку
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function deleteApplication(rowIndex) {
+    if (!confirm("Вы действительно хотите удалить эту заявку?")) return;
+    fetch(`${SCRIPT_URL}?action=delete&row=${rowIndex}`)
+      .then(res => res.json())
+      .then(response => {
+        if (response.result === 'success') {
+          showTgAlert('Заявка успешно удалена!');
+          loadAdminApplications();
+        }
+      });
+  }
+
+  function filterAdminApps() {
+    const searchInput = document.getElementById('admin-search');
+    if (!searchInput) return;
+    const query = searchInput.value.toLowerCase();
+    const filtered = allApplications.filter(app => 
+      (app.fullname && app.fullname.toLowerCase().includes(query)) ||
+      (app.club && app.club.toLowerCase().includes(query))
+    );
+    renderAdminApps(filtered);
+  }
+
+  function loadBracketMatches() {
+    const container = document.getElementById('bracket-matches-list');
+    if (!container) return;
+    const savedMatches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+
+    if (savedMatches.length === 0) {
+      container.innerHTML = '<p style="color: #8e8e93; text-align: center;">Пар пока нет. Админ формирует сетку.</p>';
+      return;
+    }
+
+    const isAdmin = checkIsAdmin();
+    container.innerHTML = savedMatches.map((m, index) => `
+      <div class="match-card">
+        <div class="match-header">
+          <span>Бой №${index + 1}</span>
+          <span style="color: #ff2a2a; font-weight: bold;">${m.category || ''}</span>
+        </div>
+        <div class="match-fighters">
+          <div class="fighter-box fighter-red"><div class="fighter-name">${m.f1}</div></div>
+          <div class="vs-badge">VS</div>
+          <div class="fighter-box fighter-blue"><div class="fighter-name">${m.f2}</div></div>
+        </div>
+        ${isAdmin ? `<button onclick="deleteMatchPair(${index})" style="margin-top: 10px; background: rgba(255, 59, 48, 0.15); color: #ff3b30; border: 1px solid #ff3b30; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;">🗑️ Удалить бой</button>` : ''}
+      </div>
+    `).join('');
+  }
+
+  function addMatchPair() {
+    const f1 = document.getElementById('pair-fighter1').value.trim();
+    const f2 = document.getElementById('pair-fighter2').value.trim();
+    const cat = document.getElementById('pair-category').value.trim();
+    const age = document.getElementById('pair-age').value.trim();
+
+    if (!f1 || !f2) {
+      showTgAlert('Заполните ФИО обоих бойцов!');
+      return;
+    }
+
+    const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+    matches.push({ f1, f2, category: cat, age });
+    localStorage.setItem('rfc_matches', JSON.stringify(matches));
+
+    document.getElementById('pair-fighter1').value = '';
+    document.getElementById('pair-fighter2').value = '';
+    document.getElementById('pair-category').value = '';
+    document.getElementById('pair-age').value = '';
+
+    showTgAlert('Пара успешно добавлена!');
+    loadBracketMatches();
+  }
+
+  function deleteMatchPair(index) {
+    if (!confirm("Удалить этот бой?")) return;
+    const matches = JSON.parse(localStorage.getItem('rfc_matches') || '[]');
+    matches.splice(index, 1);
+    localStorage.setItem('rfc_matches', JSON.stringify(matches));
+    loadBracketMatches();
+  }
+
+  function hideSplashScreen() {
+    const splash = document.getElementById('splash-screen');
+    if (splash && !splash.classList.contains('splash-fade-out')) {
+      splash.classList.add('splash-fade-out');
+      setTimeout(() => { splash.style.display = 'none'; }, 600);
     }
   }
 
-  const approvedBox = document.getElementById('pay-approved-box');
-  const pendingBox = document.getElementById('pay-pending-box');
+  async function checkPaymentStatus() {
+    let isPaid = localStorage.getItem('rfc_paid') === 'true';
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const tgId = tgUser?.id;
 
-  if (isPaid && approvedBox && pendingBox) {
-    approvedBox.classList.remove('hidden');
-    pendingBox.classList.add('hidden');
+    if (!isPaid && tgId) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/check_payment?user_id=${tgId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.is_paid || data.status === 'confirmed') {
+            isPaid = true;
+            localStorage.setItem('rfc_paid', 'true');
+          }
+        }
+      } catch (e) {
+        console.error('Ошибка проверки статуса:', e);
+      }
+    }
 
-    const fullName = localStorage.getItem('rfc_fullname') || (tgUser ? tgUser.first_name : 'Участник');
-    const code = localStorage.getItem('rfc_pay_code') || '-';
+    const approvedBox = document.getElementById('pay-approved-box');
+    const pendingBox = document.getElementById('pay-pending-box');
 
-    const fnEl = document.getElementById('app-user-fullname');
-    const codeEl = document.getElementById('app-user-code');
-
-    if (fnEl) fnEl.textContent = fullName;
-    if (codeEl) codeEl.textContent = code;
+    if (isPaid && approvedBox && pendingBox) {
+      approvedBox.classList.remove('hidden');
+      pendingBox.classList.add('hidden');
+      document.getElementById('app-user-fullname').textContent = localStorage.getItem('rfc_fullname') || (tgUser ? tgUser.first_name : 'Участник');
+      document.getElementById('app-user-code').textContent = localStorage.getItem('rfc_pay_code') || '-';
+    }
   }
-}
 
+  function getLocalCurrentPhone() {
+    const currentHour = new Date().getHours();
+    const index = Math.floor(currentHour / 2) % PHONE_NUMBERS.length;
+    return PHONE_NUMBERS[index];
+  }
 
+  async function loadRequisites() {
+    const phoneEl = document.getElementById('phone-number-display');
+    if (!phoneEl) return;
+    phoneEl.textContent = getLocalCurrentPhone();
 
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/get_requisites`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.phone) phoneEl.textContent = data.phone;
+      }
+    } catch (err) {}
+  }
+
+  // ЕДИНЫЙ ТОЧКА ВХОДА (ОДИН DOMContentLoaded)
   document.addEventListener('DOMContentLoaded', () => {
-  if (window.Telegram && window.Telegram.WebApp) {
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-  }
-
-  // Запуск проверки только после полной загрузки tg.ready()
-  checkPaymentStatus();
-});
-  
-
-
-  // Массив номеров (такой же, как в main.py)
-const PHONE_NUMBERS = [
-  "+7 967 951 47 01", // 00:00-02:00, 06:00-08:00...
-  "+7 964 063 88 08", // 02:00-04:00, 08:00-10:00...
-  "+7 963 593 73 87"  // 04:00-06:00, 10:00-12:00...
-];
-
-// Функция расчёта номера по текущему времени устройства
-function getLocalCurrentPhone() {
-  const currentHour = new Date().getHours();
-  const index = Math.floor(currentHour / 2) % PHONE_NUMBERS.length;
-  return PHONE_NUMBERS[index];
-}
-
-async function loadRequisites() {
-  const phoneEl = document.getElementById('phone-number-display');
-  if (!phoneEl) return;
-
-  // 1. Мгновенно отображаем правильный номер по времени
-  phoneEl.textContent = getLocalCurrentPhone();
-
-  // 2. Дополнительно пробуем подтянуть с сервера
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/get_requisites`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.phone) {
-        phoneEl.textContent = data.phone;
-      }
+    if (window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
     }
-  } catch (err) {
-    console.warn('Запрос к API не прошел, использован локальный расчет времени:', err);
-  }
-}
 
-// Запускаем при загрузке страницы
-document.addEventListener('DOMContentLoaded', loadRequisites);
+    setTimeout(hideSplashScreen, 1500);
 
+    const ageInput = document.getElementById('reg-age');
+    const weightInput = document.getElementById('reg-weight');
+    const submitBtn = document.getElementById('btn-submit');
+    const resetBtn = document.getElementById('btn-reset');
 
-  </script>
+    if (ageInput) ageInput.addEventListener('input', updateWeightOptions);
+    if (weightInput) weightInput.addEventListener('input', updateWeightDisplay);
+    if (submitBtn) submitBtn.addEventListener('click', submitApplication);
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        localStorage.clear();
+        location.reload();
+      });
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const tabId = this.getAttribute('data-tab');
+        switchTab(tabId, this);
+      });
+    });
+
+    updateWeightOptions();
+    switchTab('tab-apply');
+    updateProfileUI();
+    checkAdminAccess();
+    loadBracketMatches();
+    loadInfoData();
+    initUserCode();
+    checkPaymentStatus();
+    loadRequisites();
+  });
+</script>
 </body>
 </html>
