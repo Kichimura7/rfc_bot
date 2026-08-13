@@ -343,19 +343,18 @@
     }
 
 
-    /* --- СПЛЭШ-ЭКРАН (ИНТРО) --- */
+ /* --- СПЛЭШ-ЭКРАН (ИНТРО) --- */
     #splash-screen {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: #0b0c10;
+      background-color: #0b0c10;
       z-index: 99999;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s ease;
     }
 
@@ -365,53 +364,100 @@
       pointer-events: none;
     }
 
-    .splash-logo-box {
+    .splash-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Обёртка: держит лого и круг строго в одной точке */
+    .splash-logo-wrapper {
       position: relative;
       width: 160px;
       height: 160px;
-      animation: splashPulse 1.8s infinite ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
+    /* 🔴 КРАСНЫЙ КРУГ (СВЕЧЕНИЕ) - СТРОГО ПО ЦЕНТРУ */
     .splash-glow {
       position: absolute;
-      width: 250px;
-      height: 250px;
-      background: radial-gradient(circle, rgba(255, 42, 42, 0.35) 0%, rgba(0,0,0,0) 70%);
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
       border-radius: 50%;
       pointer-events: none;
-      animation: glowPulse 2s infinite ease-in-out;
+      will-change: transform, opacity, background;
+      animation: auraPulse 3s infinite ease-in-out alternate;
+    }
+
+    .splash-logo {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      will-change: filter;
+      animation: logoGlowShift 3s infinite ease-in-out alternate;
+    }
+
+    .splash-text-box {
+      text-align: center;
+      margin-top: 25px;
     }
 
     .splash-title {
-      margin-top: 24px;
-      font-size: 20px;
+      color: #ffffff;
+      font-size: 22px;
       font-weight: 900;
       letter-spacing: 3px;
-      color: #ffffff;
+      margin: 0;
       text-transform: uppercase;
       text-shadow: 0 0 15px rgba(255, 42, 42, 0.6);
       animation: splashTextFade 1.2s ease-out;
     }
 
-    .splash-sub {
-      margin-top: 6px;
-      font-size: 11px;
+    .splash-subtitle {
       color: #8e8e93;
-      letter-spacing: 1.5px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-top: 6px;
       text-transform: uppercase;
     }
 
-    @keyframes splashPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    /* 🎨 АНИМАЦИИ ПЕРЕЛИВАНИЯ И ПУЛЬСАЦИИ */
+    @keyframes auraPulse {
+      0% {
+        transform: translate(-50%, -50%) scale(0.85);
+        opacity: 0.6;
+        background: radial-gradient(circle, rgba(255, 30, 45, 0.65) 0%, rgba(180, 0, 20, 0.2) 45%, transparent 70%);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.15);
+        opacity: 0.95;
+        background: radial-gradient(circle, rgba(255, 70, 30, 0.75) 0%, rgba(220, 0, 50, 0.3) 50%, transparent 72%);
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(0.95);
+        opacity: 0.75;
+        background: radial-gradient(circle, rgba(230, 0, 60, 0.7) 0%, rgba(140, 0, 30, 0.15) 45%, transparent 70%);
+      }
     }
 
-    @keyframes glowPulse {
-      0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
-      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    @keyframes logoGlowShift {
+      0% {
+        filter: invert(1) brightness(1.2) drop-shadow(0 0 8px rgba(255, 30, 30, 0.5));
+      }
+      50% {
+        filter: invert(1) brightness(1.3) drop-shadow(0 0 20px rgba(255, 70, 30, 0.9));
+      }
+      100% {
+        filter: invert(1) brightness(1.1) drop-shadow(0 0 12px rgba(255, 0, 50, 0.6));
+      }
     }
 
     @keyframes splashTextFade {
@@ -422,14 +468,23 @@
 </head>
 <body>
   <!-- СПЛЭШ-ЭКРАН / ИНТРО -->
-  <div id="splash-screen">
-    <div class="splash-glow"></div>
-    <div class="splash-logo-box">
-      <img src="image_4.png" alt="RFC Logo" class="logo-img" />
-      <img src="image_4.png" alt="RFC Logo Shine" class="logo-shine" />
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-content">
+      
+      <!-- Обёртка: держит лого и круг в одной точке -->
+      <div class="splash-logo-wrapper">
+        <div class="splash-glow"></div>
+        <img src="image_4.png" alt="RFC Logo" class="logo-img splash-logo" />
+        <img src="image_4.png" alt="RFC Logo Shine" class="logo-shine" />
+      </div>
+
+      <!-- Текст под логотипом -->
+      <div class="splash-text-box">
+        <h1 class="splash-title">RFC LEAGUE</h1>
+        <p class="splash-subtitle">ОФИЦИАЛЬНОЕ ПРИЛОЖЕНИЕ</p>
+      </div>
+
     </div>
-    <div class="splash-title">RFC LEAGUE</div>
-    <div class="splash-sub">Официальное приложение</div>
   </div>
 
   <div class="bg-glow"></div>
