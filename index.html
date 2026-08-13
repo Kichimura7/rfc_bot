@@ -567,7 +567,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">Сумма к оплате:</span>
-          <span class="info-val" style="color: #ff2a2a; font-size: 18px; font-weight: bold;">1000 ₽</span>
+          <span class="info-val" id="fee-amount-display-1" style="color: #ff2a2a; font-size: 18px; font-weight: bold;">1000 ₽</span>
         </div>
       </div>
 
@@ -576,7 +576,7 @@
         <div class="card-title">Инструкция по оплате</div>
         
         <p style="font-size: 13px; color: #ccc; margin-bottom: 10px; line-height: 1.4;">
-          1. Переведите <b>1000 ₽</b> по номеру карты или телефона ниже.<br>
+          1. Переведите <b id="fee-amount-display-2" style="color: #fff;">1000 ₽</b> по номеру карты или телефона ниже.<br>
           2. В поле <b>«Комментарий к переводу»</b> обязательно укажите ваш уникальный код:
         </p>
 
@@ -782,6 +782,11 @@
 
         <label style="font-size: 11px; color: #aaa;">Правила и регламент:</label>
         <textarea id="admin-info-rules" rows="5" placeholder="Текст правил и регламента..." style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 10px; font-size: 13px; resize: vertical;"></textarea>
+        
+
+        <label style="font-size: 11px; color: #aaa;">Сумма взноса (₽):</label>
+        <input type="number" id="admin-info-fee" placeholder="1000" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 10px; font-size: 13px;">
+
 
         <button onclick="saveInfoData()" style="width: 100%; background: #007aff; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;">
           💾 Сохранить раздел Инфо
@@ -1066,6 +1071,17 @@
     if (tabId === 'tab-bracket') loadBracketMatches();
   }
 
+  function loadFeeData() {
+    const savedFee = localStorage.getItem('rfc_entry_fee') || '1000';
+    const feeText = `${savedFee} ₽`;
+
+    const el1 = document.getElementById('fee-amount-display-1');
+    const el2 = document.getElementById('fee-amount-display-2');
+
+    if (el1) el1.textContent = feeText;
+    if (el2) el2.textContent = feeText;
+  }
+
   function loadInfoData() {
     const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
     if (infoData.location) document.getElementById('info-location').textContent = infoData.location;
@@ -1073,28 +1089,42 @@
     if (infoData.fights) document.getElementById('info-fights').textContent = infoData.fights;
     if (infoData.maincard) document.getElementById('info-maincard').textContent = infoData.maincard;
     if (infoData.rules) document.getElementById('info-rules').textContent = infoData.rules;
+
+    loadFeeData();
   }
 
   function initAdminInfoForm() {
     const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
-    document.getElementById('admin-info-location').value = infoData.location || '';
-    document.getElementById('admin-info-weighin').value = infoData.weighin || '';
-    document.getElementById('admin-info-fights').value = infoData.fights || '';
-    document.getElementById('admin-info-maincard').value = infoData.maincard || '';
-    document.getElementById('admin-info-rules').value = infoData.rules || '';
+    if (document.getElementById('admin-info-location')) document.getElementById('admin-info-location').value = infoData.location || '';
+    if (document.getElementById('admin-info-weighin')) document.getElementById('admin-info-weighin').value = infoData.weighin || '';
+    if (document.getElementById('admin-info-fights')) document.getElementById('admin-info-fights').value = infoData.fights || '';
+    if (document.getElementById('admin-info-maincard')) document.getElementById('admin-info-maincard').value = infoData.maincard || '';
+    if (document.getElementById('admin-info-rules')) document.getElementById('admin-info-rules').value = infoData.rules || '';
+
+    const feeInput = document.getElementById('admin-info-fee');
+    if (feeInput) {
+      feeInput.value = localStorage.getItem('rfc_entry_fee') || '1000';
+    }
   }
 
   function saveInfoData() {
     const infoData = {
-      location: document.getElementById('admin-info-location').value.trim(),
-      weighin: document.getElementById('admin-info-weighin').value.trim(),
-      fights: document.getElementById('admin-info-fights').value.trim(),
-      maincard: document.getElementById('admin-info-maincard').value.trim(),
-      rules: document.getElementById('admin-info-rules').value.trim()
+      location: document.getElementById('admin-info-location')?.value.trim() || '',
+      weighin: document.getElementById('admin-info-weighin')?.value.trim() || '',
+      fights: document.getElementById('admin-info-fights')?.value.trim() || '',
+      maincard: document.getElementById('admin-info-maincard')?.value.trim() || '',
+      rules: document.getElementById('admin-info-rules')?.value.trim() || ''
     };
+
+    const feeInput = document.getElementById('admin-info-fee');
+    if (feeInput) {
+      const feeVal = feeInput.value.trim() || '1000';
+      localStorage.setItem('rfc_entry_fee', feeVal);
+    }
+
     localStorage.setItem('rfc_info_data', JSON.stringify(infoData));
     triggerHaptic('medium');
-    showTgAlert('Раздел «Инфо» успешно обновлен!');
+    showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
     loadInfoData();
   }
 
@@ -1373,12 +1403,15 @@
 
   // ЕДИНЫЙ ТОЧКА ВХОДА (ОДИН DOMContentLoaded)
   document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-    }
+  if (window.Telegram?.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+  }
 
+  // 🔽 Вызываем здесь (чтобы работало и в Telegram, и в обычном браузере)
+  loadFeeData();
+  
     setTimeout(hideSplashScreen, 1500);
 
     const ageInput = document.getElementById('reg-age');
