@@ -959,7 +959,7 @@
 
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const userId = tgUser.id || '0';
-  const userName = tgUser.username ? `@${tgUser.username}` : (tgUser.first_name || 'Участник');
+  const athleteFIO = localStorage.getItem('rfc_fullname') || 'ФИО не указано';
 
   const codeEl = document.getElementById('user-pay-code');
   const code = codeEl ? codeEl.textContent.trim() : 'Не указан';
@@ -974,7 +974,7 @@ const formData = new FormData();
 formData.append('file', compressedFile);
 formData.append('code', code);
 formData.append('user_id', userId);
-formData.append('user_name', userName);
+formData.append('user_name', athleteFIO);
   try {
     triggerHaptic('medium');
 
