@@ -1135,7 +1135,6 @@ function initAdminInfoForm() {
   try {
     triggerHaptic('medium');
 
-    // Отправляем данные на ваш VPS вместо localStorage
     const response = await fetch(`${API_BASE_URL}/api/save_settings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1146,13 +1145,15 @@ function initAdminInfoForm() {
       showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
       loadInfoData(); // Обновляем UI
     } else {
-      showTgAlert('❌ Ошибка сохранения на сервере');
+      alert(`Ошибка сервера (${response.status}): ${response.statusText}`);
     }
   } catch (err) {
     console.error('Ошибка сохранения:', err);
-    showTgAlert(' Ошибка соединения с сервером');
+    alert('Детали ошибки сети: ' + err.message);
   }
 }
+
+
 
   function updateProfileUI() {
     const fullname = localStorage.getItem('rfc_fullname');
