@@ -1079,62 +1079,80 @@ formData.append('user_name', athleteFIO);
     if (tabId === 'tab-bracket') loadBracketMatches();
   }
 
-  function loadFeeData() {
-    const savedFee = localStorage.getItem('rfc_entry_fee') || '1000';
-    const feeText = `${savedFee} ₽`;
+  // Единая функция загрузки данных с сервера VPS
+async function loadInfoData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/get_settings`);
+    if (!res.ok) return;
 
+    const data = await res.json();
+    const feeText = `${data.fee || '1000'} ₽`;
+
+    // 1. Обновляем сумму взноса у пользователей (в обоих местах)
     const el1 = document.getElementById('fee-amount-display-1');
     const el2 = document.getElementById('fee-amount-display-2');
-
     if (el1) el1.textContent = feeText;
     if (el2) el2.textContent = feeText;
+
+    // 2. Обновляем информацию на вкладке «Инфо»
+    if (document.getElementById('info-location')) document.getElementById('info-location').textContent = data.location || '';
+    if (document.getElementById('info-weighin')) document.getElementById('info-weighin').textContent = data.weighin || '';
+    if (document.getElementById('info-fights')) document.getElementById('info-fights').textContent = data.fights || '';
+    if (document.getElementById('info-maincard')) document.getElementById('info-maincard').textContent = data.maincard || '';
+    if (document.getElementById('info-rules')) document.getElementById('info-rules').textContent = data.rules || '';
+
+    // 3. Заполняем полей админки текущими данными с сервера
+    if (document.getElementById('admin-info-location')) document.getElementById('admin-info-location').value = data.location || '';
+    if (document.getElementById('admin-info-weighin')) document.getElementById('admin-info-weighin').value = data.weighin || '';
+    if (document.getElementById('admin-info-fights')) document.getElementById('admin-info-fights').value = data.fights || '';
+    if (document.getElementById('admin-info-maincard')) document.getElementById('admin-info-maincard').value = data.maincard || '';
+    if (document.getElementById('admin-info-rules')) document.getElementById('admin-info-rules').value = data.rules || '';
+    if (document.getElementById('admin-info-fee')) document.getElementById('admin-info-fee').value = data.fee || '1000';
+
+  } catch (e) {
+    console.error('Ошибка загрузки настроек с VPS:', e);
   }
+}
 
-  function loadInfoData() {
-    const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
-    if (infoData.location) document.getElementById('info-location').textContent = infoData.location;
-    if (infoData.weighin) document.getElementById('info-weighin').textContent = infoData.weighin;
-    if (infoData.fights) document.getElementById('info-fights').textContent = infoData.fights;
-    if (infoData.maincard) document.getElementById('info-maincard').textContent = infoData.maincard;
-    if (infoData.rules) document.getElementById('info-rules').textContent = infoData.rules;
+// Заглушка, чтобы не было ошибки, если старая функция вызывается где-то при переключении вкладок
+function initAdminInfoForm() {
+  loadInfoData();
+}
 
-    loadFeeData();
-  }
+  async function saveInfoData() {
+  const feeInput = document.getElementById('admin-info-fee');
+  const feeVal = feeInput ? (feeInput.value.trim() || '1000') : '1000';
 
-  function initAdminInfoForm() {
-    const infoData = JSON.parse(localStorage.getItem('rfc_info_data') || '{}');
-    if (document.getElementById('admin-info-location')) document.getElementById('admin-info-location').value = infoData.location || '';
-    if (document.getElementById('admin-info-weighin')) document.getElementById('admin-info-weighin').value = infoData.weighin || '';
-    if (document.getElementById('admin-info-fights')) document.getElementById('admin-info-fights').value = infoData.fights || '';
-    if (document.getElementById('admin-info-maincard')) document.getElementById('admin-info-maincard').value = infoData.maincard || '';
-    if (document.getElementById('admin-info-rules')) document.getElementById('admin-info-rules').value = infoData.rules || '';
+  const infoData = {
+    fee: feeVal,
+    location: document.getElementById('admin-info-location')?.value.trim() || '',
+    weighin: document.getElementById('admin-info-weighin')?.value.trim() || '',
+    fights: document.getElementById('admin-info-fights')?.value.trim() || '',
+    maincard: document.getElementById('admin-info-maincard')?.value.trim() || '',
+    rules: document.getElementById('admin-info-rules')?.value.trim() || ''
+  };
 
-    const feeInput = document.getElementById('admin-info-fee');
-    if (feeInput) {
-      feeInput.value = localStorage.getItem('rfc_entry_fee') || '1000';
-    }
-  }
-
-  function saveInfoData() {
-    const infoData = {
-      location: document.getElementById('admin-info-location')?.value.trim() || '',
-      weighin: document.getElementById('admin-info-weighin')?.value.trim() || '',
-      fights: document.getElementById('admin-info-fights')?.value.trim() || '',
-      maincard: document.getElementById('admin-info-maincard')?.value.trim() || '',
-      rules: document.getElementById('admin-info-rules')?.value.trim() || ''
-    };
-
-    const feeInput = document.getElementById('admin-info-fee');
-    if (feeInput) {
-      const feeVal = feeInput.value.trim() || '1000';
-      localStorage.setItem('rfc_entry_fee', feeVal);
-    }
-
-    localStorage.setItem('rfc_info_data', JSON.stringify(infoData));
+  try {
     triggerHaptic('medium');
-    showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
-    loadInfoData();
+
+    // Отправляем данные на ваш VPS вместо localStorage
+    const response = await fetch(`${API_BASE_URL}/api/save_settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(infoData)
+    });
+
+    if (response.ok) {
+      showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
+      loadInfoData(); // Обновляем UI
+    } else {
+      showTgAlert('❌ Ошибка сохранения на сервере');
+    }
+  } catch (err) {
+    console.error('Ошибка сохранения:', err);
+    showTgAlert(' Ошибка соединения с сервером');
   }
+}
 
   function updateProfileUI() {
     const fullname = localStorage.getItem('rfc_fullname');
