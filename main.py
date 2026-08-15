@@ -40,9 +40,9 @@ dp = Dispatcher()
 
 # === РОТАЦИЯ РЕКВИЗИТОВ ===
 REQUISITES_LIST = [
-    {"phone": "+7 967 951 47 01", "recipient": "Имя Первого"},
-    {"phone": "+7 964 063 88 08", "recipient": "Имя Второго"},
-    {"phone": "+7 963 593 73 87", "recipient": "Оргкомитет RFC"}
+    {"phone": "+7 967 951 47 01", "recipient": "Езимат Т."},
+    {"phone": "+7 964 063 88 08", "recipient": "Байали Т."},
+    {"phone": "+7 963 593 73 87", "recipient": "Хамзат С."}
 ]
 
 def get_current_requisites():
