@@ -594,7 +594,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">Получатель:</span>
-          <span class="info-val">Оргкомитет RFC</span>
+          <span class="info-val" id="recipient-display">Загрузка...</span>
         </div>
 
         <button class="btn-action" onclick="copyPhoneToClipboard()" style="background: linear-gradient(135deg, #007aff 0%, #0040aa 100%); margin-top: 14px;">
@@ -1414,19 +1414,21 @@ function initAdminInfoForm() {
     return PHONE_NUMBERS[index];
   }
 
-  async function loadRequisites() {
-    const phoneEl = document.getElementById('phone-number-display');
-    if (!phoneEl) return;
-    phoneEl.textContent = getLocalCurrentPhone();
+ async function loadRequisites() {
+  const phoneEl = document.getElementById('phone-number-display');
+  const recipientEl = document.getElementById('recipient-display');
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/get_requisites`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.phone) phoneEl.textContent = data.phone;
-      }
-    } catch (err) {}
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/get_requisites`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.phone && phoneEl) phoneEl.textContent = data.phone;
+      if (data.recipient && recipientEl) recipientEl.textContent = data.recipient;
+    }
+  } catch (err) {
+    console.error('Ошибка загрузки реквизитов:', err);
   }
+}
 
   // ЕДИНЫЙ ТОЧКА ВХОДА (ОДИН DOMContentLoaded)
   document.addEventListener('DOMContentLoaded', () => {

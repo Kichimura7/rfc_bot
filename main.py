@@ -39,17 +39,16 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 # === РОТАЦИЯ РЕКВИЗИТОВ ===
-PHONE_NUMBERS = [
-    "+7 967 951 47 01",
-    "+7 964 063 88 08",
-    "+7 963 593 73 87",
+REQUISITES_LIST = [
+    {"phone": "+7 967 951 47 01", "recipient": "Имя Первого"},
+    {"phone": "+7 964 063 88 08", "recipient": "Имя Второго"},
+    {"phone": "+7 963 593 73 87", "recipient": "Оргкомитет RFC"}
 ]
 
-
-def get_current_phone():
+def get_current_requisites():
     current_hour = datetime.now().hour
-    index = (current_hour // 2) % len(PHONE_NUMBERS)
-    return PHONE_NUMBERS[index]
+    index = (current_hour // 2) % len(REQUISITES_LIST)
+    return REQUISITES_LIST[index]
 
 
 # === БАЗА ДАННЫХ ===
@@ -222,9 +221,12 @@ async def api_healthcheck(request):
 
 
 async def api_get_requisites(request):
-    return web.json_response(
-        {"phone": get_current_phone(), "status": "ok"}, headers=CORS_HEADERS
-    )
+    req = get_current_requisites()
+    return web.json_response({
+        "phone": req["phone"],
+        "recipient": req["recipient"],
+        "status": "ok"
+    }, headers=CORS_HEADERS)
 
 
 async def api_get_settings(request):
