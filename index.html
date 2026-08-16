@@ -1452,18 +1452,44 @@ function initAdminInfoForm() {
     if (submitBtn) submitBtn.addEventListener('click', submitApplication);
     
     if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        localStorage.clear();
-        location.reload();
-      });
-    }
-
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', function() {
-        const tabId = this.getAttribute('data-tab');
-        switchTab(tabId, this);
-      });
+    resetBtn.addEventListener('click', () => {
+      localStorage.clear();
+      location.reload();
     });
+  }
+
+  // === Сохранение настроек ===
+  const saveSettingsBtn = document.getElementById('save-settings-btn');
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      alert("Кнопка нажата, отправляем...");
+
+      // Сбор данных из полей (если settingsData не определена глобально)
+      const settingsData = {
+        fullname: document.getElementById('setting-fullname')?.value || '',
+        weight: document.getElementById('setting-weight')?.value || ''
+      };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/save_settings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Init-Data': window.Telegram?.WebApp?.initData || ''
+          },
+          body: JSON.stringify(settingsData)
+        });
+
+        const data = await res.json();
+        alert("Ответ сервера: " + JSON.stringify(data));
+      } catch (err) {
+        alert("Ошибка выполнения: " + err.message);
+      }
+    });
+  }
+
+  document.querySelectorAll('.nav-item').forEach(item => {
 
     updateWeightOptions();
     switchTab('tab-apply');
@@ -1507,13 +1533,14 @@ function compressImage(file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name || "receipt.jpg", { type: 'image/jpeg' }));
-                }, 'image/jpeg', quality);
-            };
-        };
-    });
+               canvas.toBlob((blob) => {
+      resolve(new File([blob], file.name || "receipt.jpg", { type: 'image/jpeg' }));
+      }, 'image/jpeg', quality);
+    };
+  };
+});
 }
+});
 </script>
 </body>
 </html>
