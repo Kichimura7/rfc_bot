@@ -1,10 +1,13 @@
 import asyncio
 from datetime import datetime
+import hashlib
+import hmac
 import html
 import json
 import logging
 import os
 import sqlite3
+import urllib.parse
 from aiohttp import web
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
@@ -28,6 +31,9 @@ WEB_APP_BASE_URL = os.getenv(
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 5000))
 
+# Список ID администраторов (в строковом формате)
+ADMIN_IDS = [str(ADMIN_CHAT_ID), "8613061969", "670950582"]
+
 SETTINGS_FILE = "settings.json"
 
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +43,34 @@ if not BOT_TOKEN:
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+# === ПРОВЕРКА TELEGRAM INIT_DATA (HMAC-SHA256) ===
+def verify_telegram_data(init_data_raw: str) -> dict | None:
+    """Проверяет подлинность initData с помощью BOT_TOKEN через HMAC-SHA256"""
+    if not init_data_raw:
+        return None
+    try:
+        parsed_data = dict(urllib.parse.parse_qsl(init_data_raw, keep_blank_values=True))
+        received_hash = parsed_data.pop('hash', None)
+        if not received_hash:
+            return None
+
+        # Сортировка ключей по алфавиту и сборка строки проверки
+        data_check_string = '\n'.join(f"{k}={v}" for k, v in sorted(parsed_data.items()))
+
+        # Генерация ключа HMAC
+        secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
+        computed_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+
+        if hmac.compare_digest(computed_hash, received_hash):
+            user_data = parsed_data.get('user')
+            if user_data:
+                return json.loads(user_data)
+            return {}
+    except Exception as e:
+        logging.error(f"Ошибка проверки initData: {e}")
+    return None
+
 
 # === РОТАЦИЯ РЕКВИЗИТОВ ===
 REQUISITES_LIST = [
@@ -205,7 +239,7 @@ async def process_reject(callback: CallbackQuery):
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, X-Telegram-Init-Data",
 }
 
 
@@ -248,6 +282,27 @@ async def api_get_settings(request):
 
 async def api_save_settings(request):
     try:
+        # 1. Получаем initData из заголовков запроса
+        init_data = request.headers.get('X-Telegram-Init-Data', '')
+        user_info = verify_telegram_data(init_data)
+
+        if not user_info:
+            return web.json_response(
+                {"error": "Ошибка авторизации: поддельные или отсутствующие данные Telegram"},
+                status=401,
+                headers=CORS_HEADERS
+            )
+
+        # 2. Проверяем, является ли пользователь администратором
+        user_id = str(user_info.get('id', ''))
+        if user_id not in ADMIN_IDS:
+            return web.json_response(
+                {"error": "Доступ запрещен: пользователь не является администратором"},
+                status=403,
+                headers=CORS_HEADERS
+            )
+
+        # 3. Сохраняем настройки
         data = await request.json()
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)

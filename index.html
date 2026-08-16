@@ -1120,40 +1120,39 @@ function initAdminInfoForm() {
 }
 
   async function saveInfoData() {
-  const feeInput = document.getElementById('admin-info-fee');
-  const feeVal = feeInput ? (feeInput.value.trim() || '1000') : '1000';
+    const infoData = {
+        fights: document.getElementById('admin-info-fights')?.value.trim() || '',
+        maincard: document.getElementById('admin-info-maincard')?.value.trim() || '',
+        rules: document.getElementById('admin-info-rules')?.value.trim() || ''
+    };
 
-  const infoData = {
-    fee: feeVal,
-    location: document.getElementById('admin-info-location')?.value.trim() || '',
-    weighin: document.getElementById('admin-info-weighin')?.value.trim() || '',
-    fights: document.getElementById('admin-info-fights')?.value.trim() || '',
-    maincard: document.getElementById('admin-info-maincard')?.value.trim() || '',
-    rules: document.getElementById('admin-info-rules')?.value.trim() || ''
-  };
+    // Забираем строку авторизации от Telegram
+    const initData = window.Telegram?.WebApp?.initData || "";
 
-  try {
-    triggerHaptic('medium');
+    try {
+        triggerHaptic('medium');
 
-    const response = await fetch(`${API_BASE_URL}/api/save_settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(infoData)
-    });
+        const response = await fetch(`${API_BASE_URL}/api/save_settings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Telegram-Init-Data': initData
+            },
+            body: JSON.stringify(infoData)
+        });
 
-    if (response.ok) {
-      showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
-      loadInfoData(); // Обновляем UI
-    } else {
-      alert(`Ошибка сервера (${response.status}): ${response.statusText}`);
+        if (response.ok) {
+            showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
+            loadInfoData(); // Обновляем UI
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            alert(`Ошибка сервера (${response.status}): ${errData.error || response.statusText}`);
+        }
+    } catch (err) {
+        console.error('Ошибка сохранения:', err);
+        alert('Детали ошибки сети: ' + err.message);
     }
-  } catch (err) {
-    console.error('Ошибка сохранения:', err);
-    alert('Детали ошибки сети: ' + err.message);
-  }
 }
-
-
 
   function updateProfileUI() {
     const fullname = localStorage.getItem('rfc_fullname');
