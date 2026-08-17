@@ -401,6 +401,9 @@ async def cors_middleware(request, handler):
             response = await handler(request)
         except web.HTTPException as ex:
             response = ex
+        except Exception as e:
+            logging.error(f"Error handling request: {e}")
+            response = web.json_response({"error": str(e)}, status=500)
 
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
@@ -429,3 +432,10 @@ async def main():
     logging.info(f"REST API запущен на http://{HOST}:{PORT}")
     logging.info("Бот запущен!")
     await dp.start_polling(bot)
+
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logging.info("Бот остановлен.")
