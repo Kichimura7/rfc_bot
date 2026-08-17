@@ -307,19 +307,16 @@ async def api_save_settings(request):
 
 
 async def api_submit_receipt(request):
-    # 1. Извлекаем и проверяем initData из заголовков
+    # 1. Проверяем подпись Telegram и получаем проверенный user_id
     init_data = request.headers.get("x-telegram-init-data") or request.headers.get("X-Telegram-Init-Data")
     tg_user = verify_telegram_data(init_data)
     
     if not tg_user:
         return web.json_response({"error": "Unauthorized: неверный или отсутствующий initData"}, status=401)
 
-    # 2. Берем гарантированно настоящие user_id и Имя из подписи Telegram
     user_id = str(tg_user.get("id", "0"))
-    first_name = tg_user.get("first_name", "")
-    last_name = tg_user.get("last_name", "")
-    user_name = f"{first_name} {last_name}".strip() or "Участник"
-
+    
+    # 2. Читаем отправленные файл и код
     reader = await request.multipart()
     file_bytes = None
     filename = "receipt.jpg"
@@ -331,15 +328,34 @@ async def api_submit_receipt(request):
             file_bytes = await field.read()
         elif field.name == 'code':
             code = await field.text()
-        # Поля user_id и user_name из формы от клиента теперь полностью игнорируем!
 
+    # 3. Достаем ФИО бойца из таблицы fighters по user_id
+    user_name = None
     if user_id != "0":
         with get_db() as conn:
+            cursor = conn.cursor()
+            
+            # Извлекаем full_name из таблицы fighters
+            row = cursor.execute(
+                "SELECT full_name FROM fighters WHERE user_id = ?", 
+                (int(user_id),)
+            ).fetchone()
+            
+            if row and row[0]:
+                user_name = row[0]
+
+            # Сохраняем платеж
             conn.execute(
                 "INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'pending')",
                 (int(user_id), code),
             )
             conn.commit()
+
+    # Если профиль не найден в базе, берем имя из аккаунта Telegram
+    if not user_name:
+        first_name = tg_user.get("first_name", "")
+        last_name = tg_user.get("last_name", "")
+        user_name = f"{first_name} {last_name}".strip() or "Участник"
 
     safe_user_name = html.escape(user_name)
     safe_code = html.escape(code)
