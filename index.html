@@ -1114,38 +1114,40 @@ try {
 
   async function saveInfoData() {
     const infoData = {
-      fights: document.getElementById('admin-info-fights')?.value.trim() || '',
-      maincard: document.getElementById('admin-info-maincard')?.value.trim() || '',
-      rules: document.getElementById('admin-info-rules')?.value.trim() || ''
+        location: document.getElementById('admin-info-location')?.value.trim() || '',
+        weighin: document.getElementById('admin-info-weighin')?.value.trim() || '',
+        fights: document.getElementById('admin-info-fights')?.value.trim() || '',
+        maincard: document.getElementById('admin-info-maincard')?.value.trim() || '',
+        rules: document.getElementById('admin-info-rules')?.value.trim() || '',
+        fee: document.getElementById('admin-info-fee')?.value.trim() || '1000'
     };
 
     const initData = window.Telegram?.WebApp?.initData || "";
 
     try {
-      triggerHaptic('medium');
+        triggerHaptic('medium');
 
-      const response = await fetch(`${API_BASE_URL}/api/save_settings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Telegram-Init-Data': initData
-        },
-        body: JSON.stringify(infoData)
-      });
+        const response = await fetch(`${API_BASE_URL}/api/save_settings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Telegram-Init-Data': initData
+            },
+            body: JSON.stringify(infoData)
+        });
 
-      if (response.ok) {
-        showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
-        loadInfoData();
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        alert(`Ошибка сервера (${response.status}): ${errData.error || response.statusText}`);
-      }
+        if (response.ok) {
+            showTgAlert('Раздел «Инфо» и сумма взноса успешно обновлены!');
+            loadInfoData();
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            alert(`Ошибка сервера ${response.status}: ${errData.error || response.statusText}`);
+        }
     } catch (err) {
-      console.error('Ошибка сохранения:', err);
-      alert('Детали ошибки сети: ' + err.message);
+        console.error('Ошибка сохранения:', err);
+        alert('Детали ошибки сети: ' + err.message);
     }
-  }
-
+}
   function updateProfileUI() {
     const fullname = localStorage.getItem('rfc_fullname');
     const age = localStorage.getItem('rfc_age');
