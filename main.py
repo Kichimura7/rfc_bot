@@ -284,30 +284,41 @@ async def api_get_settings(request):
 
 
 async def api_save_settings(request):
-    init_data = request.headers.get('X-Telegram-Init-Data', '')
-    user_info = verify_telegram_data(init_data)
+    try:
+        # 1. Получаем initData из заголовков
+        init_data = request.headers.get("x-telegram-init-data") or request.headers.get("X-Telegram-Init-Data") or ""
+        user_info = verify_telegram_data(init_data)
 
-    if not user_info:
-        return web.json_response(
-            {"error": "Ошибка авторизации: поддельные или отсутствующие данные Telegram"},
-            status=401
-        )
+        if not user_info:
+            return web.json_response(
+                {"error": "Ошибка авторизации: поддельные или отсутствующие данные Telegram"},
+                status=401
+            )
 
-    user_id = str(user_info.get('id', ''))
-    if user_id not in ADMIN_IDS:
-        return web.json_response(
-            {"error": f"Доступ запрещен: ваш ID ({user_id}) не является администратором"},
-            status=403
-        )
+        # 2. Проверяем права администратора (сравнение с учетом int и str)
+        raw_user_id = user_info.get("id")
+        admin_ids_str = [str(x) for x in ADMIN_IDS]
 
-    data = await request.json()
-    with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    return web.json_response({"status": "ok"})
+        if str(raw_user_id) not in admin_ids_str:
+            return web.json_response(
+                {"error": f"Доступ запрещен: ваш ID ({raw_user_id}) не является администратором"},
+                status=403
+            )
+
+        # 3. Сохраняем настройки в файл
+        data = await request.json()
+        with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        return web.json_response({"status": "ok"})
+
+    except Exception as e:
+        logging.error(f"Ошибка сохранения настроек: {e}")
+        return web.json_response({"error": str(e)}, status=500)
 
 
 async def api_submit_receipt(request):
-    # 1. Проверяем подпись Telegram и получаем проверенный user_id
+    # 1. Проверяем подпись Telegram и получаем гарантированно НАСТОЯЩИЙ user_id
     init_data = request.headers.get("x-telegram-init-data") or request.headers.get("X-Telegram-Init-Data")
     tg_user = verify_telegram_data(init_data)
     
@@ -316,11 +327,12 @@ async def api_submit_receipt(request):
 
     user_id = str(tg_user.get("id", "0"))
     
-    # 2. Читаем отправленные файл и код
+    # 2. Читаем данные из Multipart формы
     reader = await request.multipart()
     file_bytes = None
     filename = "receipt.jpg"
     code = "Не указан"
+    form_user_name = None
 
     async for field in reader:
         if field.name == 'file':
@@ -328,34 +340,37 @@ async def api_submit_receipt(request):
             file_bytes = await field.read()
         elif field.name == 'code':
             code = await field.text()
+        elif field.name in ['user_name', 'athleteFIO']:
+            form_user_name = await field.text()
 
-    # 3. Достаем ФИО бойца из таблицы fighters по user_id
-    user_name = None
-    if user_id != "0":
+    # Priority 1: ФИО, введенное пользователем в форме
+    user_name = form_user_name.strip() if form_user_name else None
+
+    # Priority 2: Поиск в таблице fighters по user_id
+    if not user_name and user_id != "0":
         with get_db() as conn:
             cursor = conn.cursor()
-            
-            # Извлекаем full_name из таблицы fighters
             row = cursor.execute(
                 "SELECT full_name FROM fighters WHERE user_id = ?", 
                 (int(user_id),)
             ).fetchone()
-            
             if row and row[0]:
                 user_name = row[0]
 
-            # Сохраняем платеж
+    # Priority 3: Имя из Telegram
+    if not user_name:
+        first_name = tg_user.get("first_name", "")
+        last_name = tg_user.get("last_name", "")
+        user_name = f"{first_name} {last_name}".strip() or "Участник"
+
+    # Сохраняем платёж
+    if user_id != "0":
+        with get_db() as conn:
             conn.execute(
                 "INSERT OR REPLACE INTO payments (user_id, code, status) VALUES (?, ?, 'pending')",
                 (int(user_id), code),
             )
             conn.commit()
-
-    # Если профиль не найден в базе, берем имя из аккаунта Telegram
-    if not user_name:
-        first_name = tg_user.get("first_name", "")
-        last_name = tg_user.get("last_name", "")
-        user_name = f"{first_name} {last_name}".strip() or "Участник"
 
     safe_user_name = html.escape(user_name)
     safe_code = html.escape(code)

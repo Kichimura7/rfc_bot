@@ -967,11 +967,12 @@
       compressedFile = await compressImage(file);
     }
 
-    const formData = new FormData();
-        formData.append('file', compressedFile);
-        formData.append('code', code);
-        try {
-            triggerHaptic('medium');
+   const formData = new FormData();
+formData.append('file', compressedFile);
+formData.append('code', code);
+formData.append('user_name', athleteFIO); // <--- Добавьте эту строку здесь
+
+try {
 
             const response = await fetch(`${API_BASE_URL}/api/submit_receipt`, {
                 method: 'POST',
