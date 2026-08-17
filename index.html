@@ -968,17 +968,18 @@
     }
 
     const formData = new FormData();
-    formData.append('file', compressedFile);
-    formData.append('code', code);
-    formData.append('user_id', userId);
-    formData.append('user_name', athleteFIO);
-    try {
-      triggerHaptic('medium');
+        formData.append('file', compressedFile);
+        formData.append('code', code);
+        try {
+            triggerHaptic('medium');
 
-      const response = await fetch(`${API_BASE_URL}/api/submit_receipt`, {
-        method: 'POST',
-        body: formData
-      });
+            const response = await fetch(`${API_BASE_URL}/api/submit_receipt`, {
+                method: 'POST',
+                headers: {
+                    'x-telegram-init-data': window.Telegram.WebApp.initData
+                },
+                body: formData
+            });
 
       const result = await response.json();
 

@@ -307,21 +307,31 @@ async def api_save_settings(request):
 
 
 async def api_submit_receipt(request):
+    # 1. Извлекаем и проверяем initData из заголовков
+    init_data = request.headers.get("x-telegram-init-data") or request.headers.get("X-Telegram-Init-Data")
+    tg_user = verify_telegram_data(init_data)
+    
+    if not tg_user:
+        return web.json_response({"error": "Unauthorized: неверный или отсутствующий initData"}, status=401)
+
+    # 2. Берем гарантированно настоящие user_id и Имя из подписи Telegram
+    user_id = str(tg_user.get("id", "0"))
+    first_name = tg_user.get("first_name", "")
+    last_name = tg_user.get("last_name", "")
+    user_name = f"{first_name} {last_name}".strip() or "Участник"
+
     reader = await request.multipart()
     file_bytes = None
     filename = "receipt.jpg"
-    code, user_id, user_name = "Не указан", "0", "Участник"
+    code = "Не указан"
 
     async for field in reader:
-        if field.name == "file":
+        if field.name == 'file':
             filename = field.filename or "receipt.jpg"
             file_bytes = await field.read()
-        elif field.name == "code":
+        elif field.name == 'code':
             code = await field.text()
-        elif field.name == "user_id":
-            user_id = await field.text()
-        elif field.name == "user_name":
-            user_name = await field.text()
+        # Поля user_id и user_name из формы от клиента теперь полностью игнорируем!
 
     if user_id != "0":
         with get_db() as conn:
@@ -373,7 +383,6 @@ async def api_submit_receipt(request):
         )
 
     return web.json_response({"status": "ok"})
-
 
 async def api_check_payment(request):
     user_id = request.query.get("user_id")
