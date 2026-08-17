@@ -8,6 +8,7 @@ import logging
 import os
 import sqlite3
 import urllib.parse
+import aiohttp_cors
 from aiohttp import web
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
@@ -391,6 +392,22 @@ async def api_check_payment(request):
 
 
 # === ЗАПУСК ===
+@web.middleware
+async def cors_middleware(request, handler):
+    if request.method == "OPTIONS":
+        response = web.Response(status=200)
+    else:
+        try:
+            response = await handler(request)
+        except web.HTTPException as ex:
+            response = ex
+
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
+
 async def main():
     app = web.Application(
         middlewares=[cors_middleware],
@@ -409,13 +426,6 @@ async def main():
     site = web.TCPSite(runner, HOST, PORT)
     await site.start()
 
-    logging.info(f"🚀 REST API запущен на http://{HOST}:{PORT}")
-    logging.info("🤖 Бот запущен!")
+    logging.info(f"REST API запущен на http://{HOST}:{PORT}")
+    logging.info("Бот запущен!")
     await dp.start_polling(bot)
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        logging.info("Бот остановлен.")
