@@ -610,7 +610,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">Банк:</span>
-          <span class="info-val">Сбербанк / Т-Банк</span>
+          <span class="info-val" id="bank-display">Загрузка...</span>
         </div>
         <div class="info-row">
           <span class="info-label">Получатель:</span>
@@ -1437,9 +1437,16 @@
   }
 
   async function loadRequisites(){
-    const phoneEl=document.getElementById('phone-number-display');const recipientEl=document.getElementById('recipient-display');
-    try{const res=await apiFetch('/api/get_requisites');const data=await readJson(res);if(data.phone&&phoneEl)phoneEl.textContent=data.phone;if(data.recipient&&recipientEl)recipientEl.textContent=data.recipient;}
-    catch(err){console.error('Ошибка загрузки реквизитов:',err);}
+    const phoneEl=document.getElementById('phone-number-display');
+    const recipientEl=document.getElementById('recipient-display');
+    const bankEl=document.getElementById('bank-display');
+    try{
+      const res=await apiFetch('/api/get_requisites');
+      const data=await readJson(res);
+      if(data.phone&&phoneEl) phoneEl.textContent=data.phone;
+      if(data.recipient&&recipientEl) recipientEl.textContent=data.recipient;
+      if(data.bank&&bankEl) bankEl.textContent=data.bank;
+    }catch(err){console.error('Ошибка загрузки реквизитов:',err);}
   }
 
   function compressImage(file,maxWidth=1920,maxHeight=1920,quality=0.8){
