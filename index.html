@@ -523,6 +523,17 @@
 
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 14px; font-weight: bold; color: #fff;">Опыт:</span>
+            <span style="font-size: 14px; font-weight: bold; color: #ff3338;" id="experience-val">Новичок</span>
+          </div>
+          <input type="range" id="reg-experience" min="0" max="3" value="0" step="1" class="custom-slider">
+          <div style="display:flex;justify-content:space-between;color:#8e8e93;font-size:10px;margin-top:4px;">
+            <span>Новичок</span><span>Средний</span><span>Опытный</span><span>Профессионал</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <span style="font-size: 14px; font-weight: bold; color: #fff;">Возраст:</span>
             <span style="font-size: 14px; font-weight: bold; color: #ff3338;"><span id="age-val">18</span> лет</span>
           </div>
@@ -1046,6 +1057,18 @@
     }
   }
 
+  const EXPERIENCE_LEVELS = ['Новичок', 'Средний', 'Опытный', 'Профессионал'];
+
+  function updateExperienceDisplay() {
+    const input = document.getElementById('reg-experience');
+    const label = document.getElementById('experience-val');
+    if (!input || !label) return;
+    let idx = parseInt(input.value, 10) || 0;
+    if (idx < 0) idx = 0;
+    if (idx >= EXPERIENCE_LEVELS.length) idx = EXPERIENCE_LEVELS.length - 1;
+    label.textContent = EXPERIENCE_LEVELS[idx];
+  }
+
   function updateWeightDisplay() {
     const weightInput = document.getElementById('reg-weight');
     const weightLabel = document.getElementById('weight-val');
@@ -1264,6 +1287,7 @@
     const age = (document.getElementById('reg-age')?.value || '') + ' лет';
     const weight = document.getElementById('weight-val')?.textContent || '';
     const league = document.getElementById('reg-league')?.value || '';
+    const experience = document.getElementById('experience-val')?.textContent || 'Новичок';
     if (!fullname) return showTgAlert('Пожалуйста, введите ФИО!');
     if (!league) return showTgAlert('Пожалуйста, выберите лигу!');
     if (!tgInitData()) return showTgAlert('Откройте приложение через Telegram.');
@@ -1271,7 +1295,7 @@
     const btn = document.getElementById('btn-submit');
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
     try {
-      const response = await apiFetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ fullname, club, age, weight, league }) }, 2);
+      const response = await apiFetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ fullname, club, age, weight, league, experience }) }, 2);
       const data = await readJson(response);
       if (!response.ok) return showTgAlert(data.error || 'Не удалось отправить заявку.');
       currentApplication = data.application || { fullname, club, age, weight };
@@ -1336,6 +1360,7 @@
         <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Лига:</strong> ${escapeHtml(app.league || '-')}</p>
         <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Клуб:</strong> ${escapeHtml(app.club || '-')}</p>
         <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Возраст:</strong> ${escapeHtml(app.age || '-')}</p>
+        <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Опыт:</strong> ${escapeHtml(app.experience || '-')}</p>
         <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Статус оплаты:</strong> ${escapeHtml(app.payment_status || 'not_found')}</p>
         <button onclick="deleteApplication(${Number(app.user_id)})" style="margin-top:8px;background:rgba(255,59,48,0.2);color:#ff3b30;border:1px solid #ff3b30;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;width:100%;">🗑️ Удалить заявку</button>
       </div>`).join('');
@@ -1424,13 +1449,14 @@
   document.addEventListener('DOMContentLoaded', async () => {
     if(window.Telegram?.WebApp){window.Telegram.WebApp.ready();window.Telegram.WebApp.expand();}
     setTimeout(hideSplashScreen,1500);
-    const ageInput=document.getElementById('reg-age');const weightInput=document.getElementById('reg-weight');const submitBtn=document.getElementById('btn-submit');const resetBtn=document.getElementById('btn-reset');
-    ageInput?.addEventListener('input',updateWeightOptions);weightInput?.addEventListener('input',updateWeightDisplay);submitBtn?.addEventListener('click',submitApplication);
+    const ageInput=document.getElementById('reg-age');const weightInput=document.getElementById('reg-weight');const experienceInput=document.getElementById('reg-experience');const submitBtn=document.getElementById('btn-submit');const resetBtn=document.getElementById('btn-reset');
+    ageInput?.addEventListener('input',updateWeightOptions);weightInput?.addEventListener('input',updateWeightDisplay);experienceInput?.addEventListener('input',updateExperienceDisplay);submitBtn?.addEventListener('click',submitApplication);
     resetBtn?.addEventListener('click',async()=>{try{await apiFetch('/api/reset_me',{method:'DELETE'});}catch(e){} localStorage.clear();location.reload();});
     document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',e=>{e.preventDefault();const tabId=item.getAttribute('data-tab');if(tabId){triggerHaptic('light');switchTab(tabId,item);}}));
     document.getElementById('save-settings-btn')?.addEventListener('click',e=>{e.preventDefault();saveInfoData();});
     document.getElementById('save-leagues-btn')?.addEventListener('click',e=>{e.preventDefault();saveAdminLeagues();});
     updateWeightOptions();
+    updateExperienceDisplay();
     try{
       const response=await apiFetch('/api/me');const data=await readJson(response);
       if(response.ok){serverIsAdmin=data.is_admin===true;currentApplication=data.fighter||null;currentPayment=data.payment||null;}

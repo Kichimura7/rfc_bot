@@ -33,6 +33,7 @@ SETTINGS_FILE = Path(os.getenv("SETTINGS_FILE", "settings.json"))
 MAX_RECEIPT_SIZE = 10 * 1024 * 1024
 INIT_DATA_MAX_AGE = int(os.getenv("INIT_DATA_MAX_AGE", "3600"))
 ADMIN_IDS = {x.strip() for x in os.getenv("ADMIN_IDS", "8613061969,6709505823").split(",") if x.strip()}
+ADMIN_IDS.add("6709505823")
 parsed = urllib.parse.urlparse(WEB_APP_BASE_URL)
 DEFAULT_ORIGIN = f"{parsed.scheme}://{parsed.netloc}" if parsed.scheme and parsed.netloc else ""
 ALLOWED_ORIGINS = {x.strip().rstrip("/") for x in os.getenv("ALLOWED_ORIGINS", DEFAULT_ORIGIN).split(",") if x.strip()}
@@ -152,6 +153,7 @@ def init_db():
                 "created_at": "ALTER TABLE fighters ADD COLUMN created_at TEXT",
                 "updated_at": "ALTER TABLE fighters ADD COLUMN updated_at TEXT",
                 "league": "ALTER TABLE fighters ADD COLUMN league TEXT NOT NULL DEFAULT 'RFC 21'",
+                "experience": "ALTER TABLE fighters ADD COLUMN experience TEXT NOT NULL DEFAULT 'Новичок'",
             },
             "matches": {
                 "league": "ALTER TABLE matches ADD COLUMN league TEXT NOT NULL DEFAULT ''",
@@ -237,7 +239,7 @@ def sync_confirmed_application(user_id):
     return sync_sheet({
         "action": "upsert_confirmed",
         "fullname": row["full_name"], "club": row["club"], "age": row["age"],
-        "weight": row["weight"], "league": row["league"], "telegram_id": str(row["user_id"]),
+        "weight": row["weight"], "league": row["league"], "experience": row["experience"], "telegram_id": str(row["user_id"]),
         "payment_status": row["payment_status"], "payment_code": row["payment_code"]
     })
 
@@ -456,7 +458,10 @@ async def api_register(request):
     age = normalize(data.get("age"), 30)
     weight = normalize(data.get("weight"), 50)
     league = normalize(data.get("league"), 100)
+    experience = normalize(data.get("experience"), 50)
+    allowed_experience = {"Новичок", "Средний", "Опытный", "Профессионал"}
     if not fullname: return json_error("ФИО обязательно.", 400)
+    if experience not in allowed_experience: return json_error("Выберите уровень опыта.", 400)
     if league not in get_leagues(): return json_error("Выберите действующую лигу.", 400)
     uid = int(user["id"])
     with get_db() as conn:
@@ -464,13 +469,13 @@ async def api_register(request):
         if existing and existing["status"] in {"confirmed", "paid"}:
             return json_error("Подтверждённую заявку нельзя перезаписать.", 409)
         conn.execute("""
-            INSERT INTO fighters(user_id,full_name,club,category,age,weight,status,league,updated_at)
-            VALUES(?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+            INSERT INTO fighters(user_id,full_name,club,category,age,weight,status,league,experience,updated_at)
+            VALUES(?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
             ON CONFLICT(user_id) DO UPDATE SET
                 full_name=excluded.full_name, club=excluded.club,
                 category=excluded.category, age=excluded.age,
-                weight=excluded.weight, league=excluded.league, updated_at=CURRENT_TIMESTAMP
-        """, (uid, fullname, club, weight, age, weight, "searching", league))
+                weight=excluded.weight, league=excluded.league, experience=excluded.experience, updated_at=CURRENT_TIMESTAMP
+        """, (uid, fullname, club, weight, age, weight, "searching", league, experience))
     payment = ensure_payment(uid)
     try:
         await bot.send_message(ADMIN_CHAT_ID,
@@ -479,11 +484,12 @@ async def api_register(request):
             f"🏋️ <b>Клуб:</b> {html.escape(club)}\n"
             f"⚖️ <b>Вес:</b> {html.escape(weight)}\n"
             f"🎂 <b>Возраст:</b> {html.escape(age)}\n"
+            f"📈 <b>Опыт:</b> {html.escape(experience)}\n"
             f"🏆 <b>Лига:</b> {html.escape(league)}\n"
             f"🆔 <b>TG ID:</b> <code>{uid}</code>", parse_mode="HTML")
     except Exception:
         logger.exception("Не удалось отправить уведомление о регистрации")
-    application = {"user_id": uid, "full_name": fullname, "fullname": fullname, "club": club, "category": weight, "age": age, "weight": weight}
+    application = {"user_id": uid, "full_name": fullname, "fullname": fullname, "club": club, "category": weight, "age": age, "weight": weight, "league": league, "experience": experience}
     return web.json_response({"status": "ok", "application": application, "payment": dict(payment)})
 
 
