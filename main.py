@@ -10,6 +10,7 @@ import secrets
 import sqlite3
 import tempfile
 import urllib.parse
+import urllib.request
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -35,6 +36,7 @@ ADMIN_IDS = {x.strip() for x in os.getenv("ADMIN_IDS", "8613061969,6709505823").
 parsed = urllib.parse.urlparse(WEB_APP_BASE_URL)
 DEFAULT_ORIGIN = f"{parsed.scheme}://{parsed.netloc}" if parsed.scheme and parsed.netloc else ""
 ALLOWED_ORIGINS = {x.strip().rstrip("/") for x in os.getenv("ALLOWED_ORIGINS", DEFAULT_ORIGIN).split(",") if x.strip()}
+GOOGLE_SHEETS_WEBHOOK_URL = os.getenv("GOOGLE_SHEETS_WEBHOOK_URL", "").strip()
 
 REQUISITES_LIST = [
     {"phone": "+7 967 951 47 01", "recipient": "Езимат Т."},
@@ -138,15 +140,21 @@ def init_db():
                 fighter2 TEXT NOT NULL,
                 category TEXT NOT NULL DEFAULT '',
                 age TEXT NOT NULL DEFAULT '',
+                league TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        conn.execute("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
         migrations = {
             "fighters": {
                 "age": "ALTER TABLE fighters ADD COLUMN age TEXT NOT NULL DEFAULT ''",
                 "weight": "ALTER TABLE fighters ADD COLUMN weight TEXT NOT NULL DEFAULT ''",
                 "created_at": "ALTER TABLE fighters ADD COLUMN created_at TEXT",
                 "updated_at": "ALTER TABLE fighters ADD COLUMN updated_at TEXT",
+                "league": "ALTER TABLE fighters ADD COLUMN league TEXT NOT NULL DEFAULT 'RFC 21'",
+            },
+            "matches": {
+                "league": "ALTER TABLE matches ADD COLUMN league TEXT NOT NULL DEFAULT ''",
             },
             "payments": {
                 "receipt_filename": "ALTER TABLE payments ADD COLUMN receipt_filename TEXT",
@@ -171,6 +179,71 @@ def init_db():
 
 
 init_db()
+
+
+DEFAULT_LEAGUES = ["RFC 21", "RFC 22"]
+
+
+def get_leagues():
+    with get_db() as conn:
+        row = conn.execute("SELECT value FROM app_settings WHERE key='leagues'").fetchone()
+        if not row:
+            conn.execute("INSERT INTO app_settings(key,value) VALUES('leagues',?)", (json.dumps(DEFAULT_LEAGUES, ensure_ascii=False),))
+            return list(DEFAULT_LEAGUES)
+        try:
+            leagues = json.loads(row["value"])
+            if isinstance(leagues, list) and len(leagues) == 2 and all(str(x).strip() for x in leagues):
+                return [str(x).strip() for x in leagues]
+        except Exception:
+            pass
+        return list(DEFAULT_LEAGUES)
+
+
+def save_leagues(leagues):
+    cleaned = []
+    for value in leagues or []:
+        value = normalize(value, 100)
+        if value and value not in cleaned:
+            cleaned.append(value)
+    if len(cleaned) != 2:
+        raise ValueError("Нужно указать ровно две разные лиги.")
+    with get_db() as conn:
+        conn.execute("INSERT INTO app_settings(key,value) VALUES('leagues',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (json.dumps(cleaned, ensure_ascii=False),))
+    return cleaned
+
+
+def sync_sheet(payload):
+    if not GOOGLE_SHEETS_WEBHOOK_URL:
+        return False
+    try:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        req = urllib.request.Request(GOOGLE_SHEETS_WEBHOOK_URL, data=body, headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=10) as response:
+            return 200 <= response.status < 300
+    except Exception:
+        logger.exception("Ошибка синхронизации с Google Sheets")
+        return False
+
+
+def sync_confirmed_application(user_id):
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT f.*, p.code AS payment_code, p.status AS payment_status
+            FROM fighters f JOIN payments p ON p.user_id=f.user_id
+            WHERE f.user_id=? AND p.status='confirmed'
+        """, (user_id,)).fetchone()
+    if not row:
+        return False
+    return sync_sheet({
+        "action": "upsert_confirmed",
+        "fullname": row["full_name"], "club": row["club"], "age": row["age"],
+        "weight": row["weight"], "league": row["league"], "telegram_id": str(row["user_id"]),
+        "payment_status": row["payment_status"], "payment_code": row["payment_code"]
+    })
+
+
+def sync_delete_application(user_id):
+    return sync_sheet({"action": "delete_by_telegram_id", "telegram_id": str(user_id)})
 
 
 def load_settings():
@@ -299,6 +372,8 @@ async def finalize_payment(callback: CallbackQuery, new_status):
             return
         conn.execute("UPDATE payments SET status=?, confirmed_by=?, updated_at=CURRENT_TIMESTAMP WHERE user_id=? AND code=?", (new_status, callback.from_user.id, user_id, code))
     await callback.answer("Заявка подтверждена ✅" if new_status == "confirmed" else "Заявка отклонена ❌")
+    if new_status == "confirmed":
+        sync_confirmed_application(user_id)
     try:
         if new_status == "confirmed":
             keyboard = InlineKeyboardMarkup(inline_keyboard=[[
@@ -380,20 +455,22 @@ async def api_register(request):
     club = normalize(data.get("club") or "Самостоятельно", 200)
     age = normalize(data.get("age"), 30)
     weight = normalize(data.get("weight"), 50)
+    league = normalize(data.get("league"), 100)
     if not fullname: return json_error("ФИО обязательно.", 400)
+    if league not in get_leagues(): return json_error("Выберите действующую лигу.", 400)
     uid = int(user["id"])
     with get_db() as conn:
         existing = conn.execute("SELECT status FROM fighters WHERE user_id=?", (uid,)).fetchone()
         if existing and existing["status"] in {"confirmed", "paid"}:
             return json_error("Подтверждённую заявку нельзя перезаписать.", 409)
         conn.execute("""
-            INSERT INTO fighters(user_id,full_name,club,category,age,weight,status,updated_at)
-            VALUES(?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+            INSERT INTO fighters(user_id,full_name,club,category,age,weight,status,league,updated_at)
+            VALUES(?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
             ON CONFLICT(user_id) DO UPDATE SET
                 full_name=excluded.full_name, club=excluded.club,
                 category=excluded.category, age=excluded.age,
-                weight=excluded.weight, updated_at=CURRENT_TIMESTAMP
-        """, (uid, fullname, club, weight, age, weight, "searching"))
+                weight=excluded.weight, league=excluded.league, updated_at=CURRENT_TIMESTAMP
+        """, (uid, fullname, club, weight, age, weight, "searching", league))
     payment = ensure_payment(uid)
     try:
         await bot.send_message(ADMIN_CHAT_ID,
@@ -402,6 +479,7 @@ async def api_register(request):
             f"🏋️ <b>Клуб:</b> {html.escape(club)}\n"
             f"⚖️ <b>Вес:</b> {html.escape(weight)}\n"
             f"🎂 <b>Возраст:</b> {html.escape(age)}\n"
+            f"🏆 <b>Лига:</b> {html.escape(league)}\n"
             f"🆔 <b>TG ID:</b> <code>{uid}</code>", parse_mode="HTML")
     except Exception:
         logger.exception("Не удалось отправить уведомление о регистрации")
@@ -492,12 +570,16 @@ async def api_opponents(request):
     with get_db() as conn:
         me = conn.execute("SELECT * FROM fighters WHERE user_id=?", (uid,)).fetchone()
         if not me: return json_error("Сначала отправьте заявку.", 409)
+        my_payment = conn.execute("SELECT status FROM payments WHERE user_id=?", (uid,)).fetchone()
+        if not my_payment or my_payment["status"] != "confirmed":
+            return json_error("Поиск соперника доступен после подтверждения оплаты.", 403)
         rows = conn.execute("""
-            SELECT user_id,full_name,club,category,age,weight,status
-            FROM fighters
-            WHERE user_id!=? AND status!='rejected' AND category=? AND weight=?
-            ORDER BY created_at ASC LIMIT 100
-        """, (uid, me["category"], me["weight"])).fetchall()
+            SELECT f.user_id,f.full_name,f.club,f.category,f.age,f.weight,f.status
+            FROM fighters f
+            INNER JOIN payments p ON p.user_id=f.user_id AND p.status='confirmed'
+            WHERE f.user_id!=? AND f.status!='rejected' AND f.category=? AND f.weight=? AND f.league=?
+            ORDER BY f.created_at ASC LIMIT 100
+        """, (uid, me["category"], me["weight"], me["league"])).fetchall()
     return web.json_response({"status": "ok", "opponents": [dict(r) for r in rows]})
 
 
@@ -507,9 +589,10 @@ async def api_applications(request):
     with get_db() as conn:
         rows = conn.execute("""
             SELECT f.*,p.code AS payment_code,p.status AS payment_status
-            FROM fighters f LEFT JOIN payments p ON p.user_id=f.user_id
+            FROM fighters f JOIN payments p ON p.user_id=f.user_id AND p.status='confirmed'
+            WHERE (?='' OR f.league=?)
             ORDER BY f.created_at DESC
-        """).fetchall()
+        """, (normalize(request.query.get("league"), 100), normalize(request.query.get("league"), 100))).fetchall()
     return web.json_response({"status": "ok", "applications": [dict(r) for r in rows]})
 
 
@@ -518,10 +601,19 @@ async def api_delete_application(request):
     if error: return error
     try: uid = int(request.match_info["user_id"])
     except Exception: return json_error("Некорректный user_id.", 400)
-    with get_db() as conn:
-        conn.execute("DELETE FROM payments WHERE user_id=?", (uid,))
-        cur = conn.execute("DELETE FROM fighters WHERE user_id=?", (uid,))
-    if cur.rowcount == 0: return json_error("Заявка не найдена.", 404)
+    try:
+        with get_db() as conn:
+            exists = conn.execute("SELECT 1 FROM fighters WHERE user_id=?", (uid,)).fetchone()
+            if not exists: return json_error("Заявка не найдена.", 404)
+            fighter = conn.execute("SELECT full_name FROM fighters WHERE user_id=?", (uid,)).fetchone()
+            if fighter:
+                conn.execute("DELETE FROM matches WHERE fighter1=? OR fighter2=?", (fighter["full_name"], fighter["full_name"]))
+            conn.execute("DELETE FROM payments WHERE user_id=?", (uid,))
+            conn.execute("DELETE FROM fighters WHERE user_id=?", (uid,))
+    except sqlite3.Error:
+        logger.exception("Ошибка удаления заявки user_id=%s", uid)
+        return json_error("Не удалось удалить заявку из базы данных.", 500)
+    sync_delete_application(uid)
     return web.json_response({"status": "ok"})
 
 
@@ -550,11 +642,17 @@ async def api_add_match(request):
     f2 = normalize(data.get("fighter2") or data.get("f2"), 200)
     cat = normalize(data.get("category"), 100)
     age = normalize(data.get("age"), 50)
+    league = normalize(data.get("league"), 100)
     if not f1 or not f2: return json_error("Заполните ФИО обоих бойцов.", 400)
     if f1.casefold() == f2.casefold(): return json_error("Боец не может быть соперником самому себе.", 400)
+    if league not in get_leagues(): return json_error("Выберите действующую лигу.", 400)
     with get_db() as conn:
-        cur = conn.execute("INSERT INTO matches(fighter1,fighter2,category,age) VALUES(?,?,?,?)", (f1,f2,cat,age))
-    return web.json_response({"status":"ok","match":{"id":cur.lastrowid,"fighter1":f1,"fighter2":f2,"category":cat,"age":age}})
+        fighters = conn.execute("""SELECT f.full_name,f.league,p.status AS payment_status FROM fighters f JOIN payments p ON p.user_id=f.user_id WHERE f.full_name IN (?,?)""", (f1,f2)).fetchall()
+        if len(fighters) != 2: return json_error("Оба бойца должны существовать среди участников.", 400)
+        if any(r["payment_status"] != "confirmed" for r in fighters): return json_error("В сетку можно добавлять только участников с подтверждённой оплатой.", 403)
+        if any(r["league"] != league for r in fighters): return json_error("Оба бойца должны быть из одной лиги.", 400)
+        cur = conn.execute("INSERT INTO matches(fighter1,fighter2,category,age,league) VALUES(?,?,?,?,?)", (f1,f2,cat,age,league))
+    return web.json_response({"status":"ok","match":{"id":cur.lastrowid,"fighter1":f1,"fighter2":f2,"category":cat,"age":age,"league":league}})
 
 
 async def api_delete_match(request):
@@ -589,6 +687,25 @@ async def cors_middleware(request, handler):
     return response
 
 
+
+async def api_get_leagues(request):
+    return web.json_response({"status": "ok", "leagues": get_leagues()})
+
+
+async def api_save_leagues(request):
+    _, error = require_admin(request)
+    if error: return error
+    try:
+        data = await request.json()
+        leagues = save_leagues(data.get("leagues"))
+        return web.json_response({"status": "ok", "leagues": leagues})
+    except ValueError as exc:
+        return json_error(str(exc), 400)
+    except Exception:
+        logger.exception("Ошибка сохранения лиг")
+        return json_error("Не удалось сохранить названия лиг.", 500)
+
+
 async def main():
     app = web.Application(middlewares=[cors_middleware], client_max_size=MAX_RECEIPT_SIZE + 1024*1024)
     routes = [
@@ -597,8 +714,8 @@ async def main():
         ("GET","/api/get_requisites",api_get_requisites),("GET","/api/get_settings",api_get_settings),
         ("POST","/api/save_settings",api_save_settings),("POST","/api/register",api_register),
         ("POST","/api/submit_receipt",api_submit_receipt),("GET","/api/check_payment",api_check_payment),
-        ("GET","/api/opponents",api_opponents),("GET","/api/applications",api_applications),
-        ("DELETE","/api/applications/{user_id}",api_delete_application),("DELETE","/api/reset_me",api_reset_me),
+        ("GET","/api/opponents",api_opponents),("GET","/api/applications",api_applications),("GET","/api/leagues",api_get_leagues),("POST","/api/leagues",api_save_leagues),
+        ("DELETE","/api/applications/{user_id}",api_delete_application),("POST","/api/applications/{user_id}/delete",api_delete_application),("DELETE","/api/reset_me",api_reset_me),
         ("GET","/api/matches",api_matches),("POST","/api/matches",api_add_match),("DELETE","/api/matches/{match_id}",api_delete_match),
     ]
     for method, path, handler in routes: app.router.add_route(method, path, handler)
@@ -607,7 +724,7 @@ async def main():
     site = web.TCPSite(runner, HOST, PORT, reuse_address=True)
     await site.start()
     logger.info("REST API запущен на http://%s:%s", HOST, PORT)
-    logger.info("Администраторы: %s", sorted(ADMIN_IDS))
+    # Список ADMIN_IDS не выводится в production-логах.
     try:
         await dp.start_polling(bot)
     finally:

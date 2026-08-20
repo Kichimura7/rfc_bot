@@ -499,7 +499,7 @@
   <!-- ЭКРАН 0: Форма регистрации -->
   <div id="screen-application" class="screen">
     <div class="card">
-      <h3 style="color: #ff3338; margin-bottom: 20px; font-weight: 800; text-align: center;">ЛИГА RFC 20</h3>
+      <h3 style="color: #ff3338; margin-bottom: 20px; font-weight: 800; text-align: center;">РЕГИСТРАЦИЯ RFC</h3>
 
       <div style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
         <div>
@@ -510,6 +510,15 @@
         <div>
           <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 6px;">Клуб / Команда</label>
           <input type="text" id="reg-club" placeholder="Название клуба или «Самостоятельно»" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box;">
+        </div>
+
+        <div>
+          <label style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 8px;">Лига</label>
+          <div id="reg-leagues" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button type="button" class="league-choice" data-league="" style="padding:12px;border-radius:10px;border:1px solid #3a3a3c;background:#1c1c1e;color:#fff;font-weight:700;">Загрузка...</button>
+            <button type="button" class="league-choice" data-league="" style="padding:12px;border-radius:10px;border:1px solid #3a3a3c;background:#1c1c1e;color:#fff;font-weight:700;">Загрузка...</button>
+          </div>
+          <input type="hidden" id="reg-league" value="">
         </div>
 
         <div>
@@ -802,6 +811,11 @@
         <label style="font-size: 11px; color: #aaa;">Синий угол (Боец 2):</label>
         <input type="text" id="pair-fighter2" placeholder="ФИО второго бойца" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
 
+        <label style="font-size: 11px; color: #aaa;">Лига:</label>
+        <select id="pair-league" style="width:100%;padding:8px;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:6px;color:#fff;margin-bottom:8px;font-size:13px;box-sizing:border-box;">
+          <option value="">Загрузка лиг...</option>
+        </select>
+
         <label style="font-size: 11px; color: #aaa;">Весовая категория / Вес:</label>
         <input type="text" id="pair-category" placeholder="Например: До 77 кг" style="width: 100%; padding: 8px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 13px;">
 
@@ -813,9 +827,19 @@
         </button>
       </div>
 
+      <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.08);">
+        <h4 style="color:#ff3338;margin-bottom:10px;font-size:14px;">🏆 Управление лигами</h4>
+        <input id="admin-league-1" type="text" placeholder="Лига 1" style="width:100%;padding:8px;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:6px;color:#fff;margin-bottom:8px;font-size:13px;box-sizing:border-box;">
+        <input id="admin-league-2" type="text" placeholder="Лига 2" style="width:100%;padding:8px;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:6px;color:#fff;margin-bottom:10px;font-size:13px;box-sizing:border-box;">
+        <button id="save-leagues-btn" type="button" style="width:100%;background:#ff3338;color:#fff;border:none;padding:10px;border-radius:8px;font-weight:bold;cursor:pointer;">💾 Сохранить названия лиг</button>
+      </div>
+
       <button id="btn-refresh-admin" onclick="loadAdminApplications()" class="btn-action" style="margin-bottom: 15px;">
         <span id="refresh-icon" style="display: inline-block;">🔄</span> Обновить данные
       </button>
+      <select id="admin-league-filter" onchange="filterAdminApps()" style="width:100%;padding:10px;background:#1c1c1e;border:1px solid #2c2c2e;border-radius:10px;color:#fff;box-sizing:border-box;margin-bottom:8px;">
+        <option value="">Все лиги</option>
+      </select>
       <input type="text" id="admin-search" placeholder="Поиск по ФИО или клубу..." oninput="filterAdminApps()" style="width: 100%; padding: 12px; background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 10px; color: #fff; box-sizing: border-box; margin-bottom: 15px;">
       <div id="admin-apps-list">
         <p style="color: #8e8e93; text-align: center;">Загрузка заявок...</p>
@@ -868,6 +892,7 @@
   let currentApplication = null;
   let currentPayment = null;
   let serverIsAdmin = false;
+  let availableLeagues = [];
 
   const weightRules = [
     { minAge: 6, maxAge: 7, weights: ["20 кг", "22 кг", "24 кг", "26 кг", "28 кг", "32 кг"] },
@@ -1120,24 +1145,133 @@
     const btn = document.getElementById('btn-start-search');
     const animation = document.getElementById('search-animation-box');
     const list = document.getElementById('opponents-list');
-
     if (!btn || !list) return;
 
     triggerHaptic('medium');
-}
+    if (!tgInitData()) return showTgAlert('Откройте приложение через Telegram.');
+    if (!currentApplication) return showTgAlert('Сначала отправьте заявку на участие.');
+
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.innerHTML = '⏳ Ищем соперника...';
+    list.innerHTML = '';
+    if (animation) animation.classList.remove('hidden');
+
+    try {
+      const response = await apiFetch('/api/opponents', {}, 2);
+      const data = await readJson(response);
+      if (!response.ok) throw new Error(data.error || `Ошибка поиска (${response.status})`);
+
+      const opponents = Array.isArray(data.opponents) ? data.opponents : [];
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      if (!opponents.length) {
+        if (animation) animation.classList.add('hidden');
+        list.innerHTML = `<div style="text-align:center;padding:18px 10px;"><div style="font-size:40px;margin-bottom:8px;">🔎</div><strong style="color:#fff;display:block;margin-bottom:6px;">Соперник не найден</strong><p style="color:#8e8e93;font-size:13px;margin:0;">Пока нет подходящих подтверждённых участников в вашей весовой категории и лиге.</p></div>`;
+        triggerHaptic('light');
+        return;
+      }
+
+      if (animation) animation.classList.add('hidden');
+      list.innerHTML = `<div style="text-align:center;padding:10px 10px 14px;"><div style="font-size:32px;margin-bottom:5px;">🥊</div><strong style="color:#28a745;display:block;">Соперник найден</strong><p style="color:#8e8e93;font-size:12px;margin:4px 0 0;">Подходящие подтверждённые участники вашей лиги</p></div>` + opponents.map(opponent => `<div class="match-card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><strong style="color:#fff;">${escapeHtml(opponent.full_name || 'Участник')}</strong><span style="background:#ff2a2a;color:#fff;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:bold;white-space:nowrap;">${escapeHtml(opponent.weight || currentApplication.weight || '-')}</span></div><p style="font-size:13px;color:#ccc;margin:6px 0 0;"><strong>Клуб:</strong> ${escapeHtml(opponent.club || 'Самостоятельно')}</p><p style="font-size:13px;color:#ccc;margin:2px 0 0;"><strong>Возраст:</strong> ${escapeHtml(opponent.age || '-')}</p><p style="font-size:13px;color:#ccc;margin:2px 0 0;"><strong>Лига:</strong> ${escapeHtml(opponent.league || currentApplication.league || '-')}</p></div>`).join('');
+      triggerHaptic('medium');
+    } catch (e) {
+      console.error('Ошибка поиска соперника:', e);
+      if (animation) animation.classList.add('hidden');
+      list.innerHTML = `<div style="text-align:center;padding:18px 10px;color:#ff3b30;"><div style="font-size:36px;margin-bottom:8px;">⚠️</div><strong style="display:block;margin-bottom:6px;">Не удалось выполнить поиск</strong><p style="color:#8e8e93;font-size:13px;margin:0;">${escapeHtml(e.message || 'Ошибка сервера. Попробуйте ещё раз.')}</p></div>`;
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.innerHTML = '🔍 Найти соперника';
+    }
+  }
+
+  async function loadLeagues() {
+    try {
+      const response = await apiFetch('/api/leagues');
+      const data = await readJson(response);
+      if (!response.ok || !Array.isArray(data.leagues) || data.leagues.length !== 2) throw new Error(data.error || 'Не удалось загрузить лиги');
+      availableLeagues = data.leagues;
+      const hidden = document.getElementById('reg-league');
+      const container = document.getElementById('reg-leagues');
+      if (container) {
+        container.innerHTML = data.leagues.map(league => `<button type="button" class="league-choice" data-league="${escapeHtml(league)}" style="padding:12px;border-radius:10px;border:1px solid #3a3a3c;background:#1c1c1e;color:#fff;font-weight:700;">${escapeHtml(league)}</button>`).join('');
+        container.querySelectorAll('.league-choice').forEach(btn => btn.addEventListener('click', () => {
+          container.querySelectorAll('.league-choice').forEach(x => { x.style.borderColor='#3a3a3c'; x.style.background='#1c1c1e'; });
+          btn.style.borderColor='#ff3338'; btn.style.background='rgba(255,51,56,0.18)';
+          if (hidden) hidden.value = btn.dataset.league || '';
+          localStorage.setItem('rfc_league', btn.dataset.league || '');
+        }));
+        const initial = currentApplication?.league || localStorage.getItem('rfc_league') || data.leagues[0];
+        const initialButton = Array.from(container.querySelectorAll('.league-choice')).find(b => b.dataset.league === initial);
+        if (initialButton) initialButton.click();
+      }
+      const pairLeague = document.getElementById('pair-league');
+      if (pairLeague) {
+        const current = pairLeague.value;
+        pairLeague.innerHTML = data.leagues.map(league => `<option value="${escapeHtml(league)}">${escapeHtml(league)}</option>`).join('');
+        if (data.leagues.includes(current)) pairLeague.value=current;
+      }
+      populateAdminLeagueFilter();
+      await loadAdminLeagues();
+    } catch(e) {
+      console.error('Ошибка загрузки лиг:', e);
+    }
+  }
+
+  async function loadAdminLeagues() {
+    if (!serverIsAdmin) return;
+    try {
+      const response = await apiFetch('/api/leagues');
+      const data = await readJson(response);
+      if (!response.ok) throw new Error(data.error || 'Ошибка загрузки лиг');
+      availableLeagues = Array.isArray(data.leagues) ? data.leagues : availableLeagues;
+      const a=document.getElementById('admin-league-1'), b=document.getElementById('admin-league-2');
+      if(a) a.value=availableLeagues[0] || '';
+      if(b) b.value=availableLeagues[1] || '';
+      populateAdminLeagueFilter();
+    } catch(e) { console.error('Ошибка загрузки лиг админки:',e); }
+  }
+
+  function populateAdminLeagueFilter() {
+    const select=document.getElementById('admin-league-filter');
+    if(!select) return;
+    const current=select.value;
+    select.innerHTML='<option value="">Все лиги</option>'+availableLeagues.map(league=>`<option value="${escapeHtml(league)}">${escapeHtml(league)}</option>`).join('');
+    if(availableLeagues.includes(current)) select.value=current;
+  }
+
+  async function saveAdminLeagues() {
+    const a=document.getElementById('admin-league-1')?.value.trim() || '';
+    const b=document.getElementById('admin-league-2')?.value.trim() || '';
+    if(!a || !b) return showTgAlert('Укажите названия обеих лиг.');
+    if(a.toLowerCase()===b.toLowerCase()) return showTgAlert('Названия лиг должны отличаться.');
+    try {
+      const response=await apiFetch('/api/leagues',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leagues:[a,b]})});
+      const data=await readJson(response);
+      if(!response.ok) throw new Error(data.error || 'Не удалось сохранить лиги.');
+      availableLeagues=data.leagues || [a,b];
+      populateAdminLeagueFilter();
+      await loadLeagues();
+      showTgAlert('Названия лиг сохранены.');
+      await loadAdminApplications();
+    } catch(e) { console.error(e); showTgAlert(e.message || 'Не удалось сохранить лиги.'); }
+  }
 
   async function submitApplication() {
     const fullname = document.getElementById('reg-fullname')?.value.trim() || '';
     const club = document.getElementById('reg-club')?.value.trim() || 'Самостоятельно';
     const age = (document.getElementById('reg-age')?.value || '') + ' лет';
     const weight = document.getElementById('weight-val')?.textContent || '';
+    const league = document.getElementById('reg-league')?.value || '';
     if (!fullname) return showTgAlert('Пожалуйста, введите ФИО!');
+    if (!league) return showTgAlert('Пожалуйста, выберите лигу!');
     if (!tgInitData()) return showTgAlert('Откройте приложение через Telegram.');
 
     const btn = document.getElementById('btn-submit');
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
     try {
-      const response = await apiFetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ fullname, club, age, weight }) }, 2);
+      const response = await apiFetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ fullname, club, age, weight, league }) }, 2);
       const data = await readJson(response);
       if (!response.ok) return showTgAlert(data.error || 'Не удалось отправить заявку.');
       currentApplication = data.application || { fullname, club, age, weight };
@@ -1147,6 +1281,7 @@
       localStorage.setItem('rfc_age',age);
       localStorage.setItem('rfc_weight',weight);
       localStorage.setItem('rfc_club',club);
+      localStorage.setItem('rfc_league',league);
       updateProfileUI();
       await initUserCode();
       switchTab('tab-apply');
@@ -1198,6 +1333,7 @@
           <strong style="color:#fff;">${escapeHtml(app.full_name || app.fullname || 'Без имени')}</strong>
           <span style="background:#ff3b30;color:#fff;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:bold;">${escapeHtml(app.weight || '-')}</span>
         </div>
+        <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Лига:</strong> ${escapeHtml(app.league || '-')}</p>
         <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Клуб:</strong> ${escapeHtml(app.club || '-')}</p>
         <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Возраст:</strong> ${escapeHtml(app.age || '-')}</p>
         <p style="font-size:13px;color:#ccc;margin:2px 0;"><strong>Статус оплаты:</strong> ${escapeHtml(app.payment_status || 'not_found')}</p>
@@ -1208,7 +1344,7 @@
   async function deleteApplication(userId) {
     if(!confirm('Вы действительно хотите удалить эту заявку?')) return;
     try {
-      const response=await apiFetch(`/api/applications/${encodeURIComponent(userId)}`,{method:'DELETE'});
+      const response=await apiFetch(`/api/applications/${encodeURIComponent(userId)}/delete`,{method:'POST'});
       const data=await readJson(response);
       if(!response.ok) throw new Error(data.error || 'Ошибка удаления');
       showTgAlert('Заявка успешно удалена!'); loadAdminApplications();
@@ -1217,7 +1353,8 @@
 
   function filterAdminApps() {
     const q=(document.getElementById('admin-search')?.value||'').toLowerCase();
-    renderAdminApps(allApplications.filter(app=>(app.full_name||app.fullname||'').toLowerCase().includes(q)||(app.club||'').toLowerCase().includes(q)));
+    const league=(document.getElementById('admin-league-filter')?.value||'');
+    renderAdminApps(allApplications.filter(app=>(!league || (app.league||'')===league) && ((app.full_name||app.fullname||'').toLowerCase().includes(q)||(app.club||'').toLowerCase().includes(q)||(app.league||'').toLowerCase().includes(q))));
   }
 
   async function loadBracketMatches() {
@@ -1228,7 +1365,7 @@
       const matches=data.matches||[];
       if(!matches.length){container.innerHTML='<p style="color:#8e8e93;text-align:center;">Пар пока нет. Админ формирует сетку.</p>';return;}
       container.innerHTML=matches.map((m,index)=>`
-        <div class="match-card"><div class="match-header"><span>Бой №${index+1}</span><span style="color:#ff2a2a;font-weight:bold;">${escapeHtml(m.category||'')}</span></div>
+        <div class="match-card"><div class="match-header"><span>Бой №${index+1}</span><span style="color:#ff2a2a;font-weight:bold;">${escapeHtml(m.league||'')} ${escapeHtml(m.category||'')}</span></div>
         <div class="match-fighters"><div class="fighter-box fighter-red"><div class="fighter-name">${escapeHtml(m.fighter1)}</div></div><div class="vs-badge">VS</div><div class="fighter-box fighter-blue"><div class="fighter-name">${escapeHtml(m.fighter2)}</div></div></div>
         ${serverIsAdmin?`<button onclick="deleteMatchPair(${Number(m.id)})" style="margin-top:10px;background:rgba(255,59,48,0.15);color:#ff3b30;border:1px solid #ff3b30;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;width:100%;">🗑️ Удалить бой</button>`:''}</div>`).join('');
     } catch(e){console.error(e);container.innerHTML='<p style="color:#ff3b30;text-align:center;">Ошибка загрузки сетки</p>';}
@@ -1239,9 +1376,10 @@
     const f2=document.getElementById('pair-fighter2')?.value.trim()||'';
     const cat=document.getElementById('pair-category')?.value.trim()||'';
     const age=document.getElementById('pair-age')?.value.trim()||'';
+    const league=document.getElementById('pair-league')?.value||'';
     if(!f1||!f2)return showTgAlert('Заполните ФИО обоих бойцов!');
     try{
-      const response=await apiFetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fighter1:f1,fighter2:f2,category:cat,age})});
+      const response=await apiFetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fighter1:f1,fighter2:f2,category:cat,age,league})});
       const data=await readJson(response); if(!response.ok) throw new Error(data.error||'Ошибка');
       ['pair-fighter1','pair-fighter2','pair-category','pair-age'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
       showTgAlert('Пара успешно добавлена!'); loadBracketMatches();
@@ -1291,6 +1429,7 @@
     resetBtn?.addEventListener('click',async()=>{try{await apiFetch('/api/reset_me',{method:'DELETE'});}catch(e){} localStorage.clear();location.reload();});
     document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',e=>{e.preventDefault();const tabId=item.getAttribute('data-tab');if(tabId){triggerHaptic('light');switchTab(tabId,item);}}));
     document.getElementById('save-settings-btn')?.addEventListener('click',e=>{e.preventDefault();saveInfoData();});
+    document.getElementById('save-leagues-btn')?.addEventListener('click',e=>{e.preventDefault();saveAdminLeagues();});
     updateWeightOptions();
     try{
       const response=await apiFetch('/api/me');const data=await readJson(response);
@@ -1298,7 +1437,7 @@
     }catch(e){console.error('Не удалось загрузить профиль:',e);}
     updateProfileUI();checkAdminAccess();
     switchTab(currentApplication?'tab-apply':'tab-apply');
-    await Promise.allSettled([loadBracketMatches(),loadInfoData(),initUserCode(),checkPaymentStatus(),loadRequisites()]);
+    await Promise.allSettled([loadBracketMatches(),loadInfoData(),initUserCode(),checkPaymentStatus(),loadRequisites(),loadLeagues(),loadAdminLeagues(),loadAdminApplications()]);
   });
 </script>
 </body>
